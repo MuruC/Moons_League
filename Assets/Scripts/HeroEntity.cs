@@ -2,56 +2,82 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public static class GlobalState {
-    public static int eState_Nomal = 0;
-    public static int eState_Move = 1;
-    public static int eState_Attack = 2;
-    public static int eState_Sell = 0;
-}
-
-public static class GlobalHeroIndex {
-    static int eEntityType_GoblinTechies = 0;
-    static int eEntityType_Paladin = 1;
-    static int eEntityType_WitchDoctor = 2;
-    static int eEntityType_Bard = 3;
-    static int eEntityType_Snaker = 4;
-    static int eEntityType_Snow = 5;
-    static int eEntityType_SandShaper = 6;
-    static int eEntityType_Mole = 7;
-    static int eEntityType_Monk = 8;
-    static int eEntityType_Flame = 9;
-    static int eEntityType_Lich = 10;
-    static int eEntityType_Silencer = 11;
-    static int eEntityType_ElfArcher = 12;
-    static int eEntityType_Berserker = 13;
-    static int eEntityType_Cleric = 14;
-    static int eEntityType_Purifier = 15;
-    static int eEntityType_LandGuardian = 16;
-    static int eEntityType_Rogue = 17;
-    static int eEntityType_DeathAlchemist = 18;
-    static int eEntityType_LordOfTime = 19;
-    static int eEntityType_MasterOfCircus = 20;
-}
-
-public static class ThisHero {
-   // private int currentHP;
-
-}
-
-
-
 public class HeroEntity : MonoBehaviour
 {
-    public static HeroEntity Instance;
+    public class Heroes {
+        private int nEntityType;
+        private int nAlignType;
+        private int currentHP;
+        private int currentMoveStep;
+        private int maxMoveStep;
+        private int maxHP;
+        private int maxAttack;
+        private int currentAttack;
+        private int currentState;
+        private int defense;
+        public Heroes(int nType, int nAlign) {
+            nEntityType = nType;
+            nAlignType = nAlign;
+            currentHP = HeroManager.Instance.getHeroDataDic(nType).m_nHP;
+            maxHP = HeroManager.Instance.getHeroDataDic(nType).m_nHP;
+            maxMoveStep = HeroManager.Instance.getHeroDataDic(nType).m_nMaxMove;
+            currentMoveStep = HeroManager.Instance.getHeroDataDic(nType).m_nMaxMove;
+            maxAttack = HeroManager.Instance.getHeroDataDic(nType).m_nDamage;
+            currentAttack = HeroManager.Instance.getHeroDataDic(nType).m_nDamage;
+            defense = 0;
+        }
+
+        public void setHP(int value) {
+            currentHP = value;
+        }
+        public void modifyHP(int value) {
+            currentHP += value;
+        }
+        public int getHP() {
+            return currentHP;
+        }
+
+        public void setCurrentMoveStep(int value) {
+            currentMoveStep = value;
+        }
+        public void modifyCurrentMoveStep(int value) {
+            currentMoveStep += value;
+        }
+        public int getCurrentMoveStep()
+        {
+            return currentMoveStep;
+        }
+
+        public void setDefense(int value) {
+            defense = value;
+        }
+        public void modifyDefense(int value) {
+            defense += value;
+        }
+        public int getDefense() {
+            return defense;
+        }
+    }
+
+
+    public int nEntityType;
+    public int nAlign;
+    public HeroEntity.Heroes m_pHero;
     // Start is called before the first frame update
     void Start()
     {
-
+        
     }
 
     // Update is called once per frame
     void Update()
     {
         
+    }
+
+    public void setEntity(int nType,int nAlign_) {
+        nEntityType = nType;
+        nAlign = nAlign_;
+        m_pHero = new HeroEntity.Heroes(nEntityType,nAlign);
     }
 }
