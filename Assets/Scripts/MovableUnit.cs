@@ -10,12 +10,16 @@ public class MovableUnit : MonoBehaviour
     public int destinationYIndex;
     public float speed;
     public bool bMoving = false;
-    public List<GameObject> greenTiles;
+    public List<GameObject> walkableTiles;
+    HeroEntity.Heroes m_pHero;
+    public int indexX;
+    public int indexY;
     // Start is called before the first frame update
     void Start()
     {
         destination = transform.position;
-        greenTiles = new List<GameObject>();
+        walkableTiles = new List<GameObject>();
+        m_pHero = gameObject.GetComponent<HeroEntity>().m_pHero;
     }
 
     // Update is called once per frame
@@ -34,6 +38,7 @@ public class MovableUnit : MonoBehaviour
             bMoving = true;
         }
 
+        thisUnitHasBeenClicked = false;
 
         Vector2 dir = new Vector2(destination.x - transform.position.x, destination.y - transform.position.y);
         Vector2 velocity = dir.normalized * speed * Time.deltaTime;
@@ -45,11 +50,15 @@ public class MovableUnit : MonoBehaviour
 
     void whenUnitFirstArriveDestination() {
         if (thisUnitHasBeenClicked == false) {
-            for (int i = 0; i < greenTiles.Count; i++)
-            {
-                greenTiles[i].GetComponent<SpriteRenderer>().color = Color.white;
-            }
-            greenTiles.Clear();
+            clearWalkableTileList();
         }
+    }
+
+    public void clearWalkableTileList() {
+        for (int i = 0; i < walkableTiles.Count; i++)
+        {
+            walkableTiles[i].GetComponent<TileScript>().setColorAnime(GlobTileColorAnimeIndex.eTileColor_null);
+        }
+        walkableTiles.Clear();
     }
 }

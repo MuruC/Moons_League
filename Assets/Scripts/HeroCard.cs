@@ -19,7 +19,7 @@ public class HeroCard : MonoBehaviour
         
     }
 
-    public void setAlpha(int alpha) {
+    public void setUnactive() {
         /*
         Color tmp = GetComponent<Image>().color;
         tmp.a = alpha;

@@ -13,6 +13,8 @@ GameObject:
   - component: {fileID: 3535453986095148003}
   - component: {fileID: 8394083850864740061}
   - component: {fileID: 34044779324159415}
+  - component: {fileID: 101097823016971422}
+  - component: {fileID: 6360396420813874514}
   m_Layer: 0
   m_Name: HeroPrefab
   m_TagString: Untagged
@@ -28,8 +30,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 172829749044840574}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 5.8, y: -6.2, z: 0}
-  m_LocalScale: {x: 61.292923, y: 55.748024, z: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 6.8584547, y: 7.027267, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
@@ -50,9 +52,11 @@ MonoBehaviour:
   destination: {x: 0, y: 0}
   destinationXIndex: 0
   destinationYIndex: 0
-  speed: 0
+  speed: 10
   bMoving: 0
-  greenTiles: []
+  walkableTiles: []
+  indexX: 0
+  indexY: 0
 --- !u!114 &3535453986095148003
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -67,6 +71,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   nEntityType: 0
   nAlign: 0
+  actionMode: 0
 --- !u!212 &8394083850864740061
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -105,7 +110,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_Sprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 1, g: 0.7058532, b: 0, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -130,4 +135,44 @@ CircleCollider2D:
   m_UsedByComposite: 0
   m_Offset: {x: 0, y: 0}
   serializedVersion: 2
-  m_Radius: 0.06
+  m_Radius: 0.12
+--- !u!95 &101097823016971422
+Animator:
+  serializedVersion: 3
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 172829749044840574}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 14476ef2081f1c3448e484713dea8a6a, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorControllerStateOnDisable: 0
+--- !u!50 &6360396420813874514
+Rigidbody2D:
+  serializedVersion: 4
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 172829749044840574}
+  m_BodyType: 1
+  m_Simulated: 1
+  m_UseFullKinematicContacts: 0
+  m_UseAutoMass: 0
+  m_Mass: 1
+  m_LinearDrag: 0
+  m_AngularDrag: 0.05
+  m_GravityScale: 0
+  m_Material: {fileID: 0}
+  m_Interpolate: 0
+  m_SleepingMode: 1
+  m_CollisionDetection: 0
+  m_Constraints: 0

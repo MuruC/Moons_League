@@ -21,7 +21,7 @@ public static class GlobalHeroStatus
     public static int eStatus_Stun = 6;
 }
 
-public static class GlobalHeroIndex {
+public static class GlobalHeroIndex {  
     public const int eEntityType_GoblinTechies = 0;
     public const int eEntityType_Paladin = 1;
     public const int eEntityType_WitchDoctor = 2;
@@ -44,6 +44,7 @@ public static class GlobalHeroIndex {
     public const int eEntityType_LordOfTime = 19;
     public const int eEntityType_MasterOfCircus = 20;
     public const int eEntityType_Miner = 21;
+    public const int eEntityType_King = 22;
 }
 
 public struct HeroData
@@ -60,17 +61,33 @@ public struct HeroData
     public int m_nGetMoneyByKillingThisHero;
     public int m_nTotalAmountInGame;
     public string m_strSkillDescription;
+    public int m_nTargetNum;
 }
 
 public class HeroManager : MonoBehaviour
 {
     public static HeroManager Instance;
-    private Dictionary<int, HeroData>heroDataDic;
+    private Dictionary<int, HeroData> heroDataDic;
     private Dictionary<int, int> maxHeroNumDic;
     private List<GameObject> player0HeroObjList;
     private List<GameObject> player1HeroObjList;
 
     private List<HeroData> randomHeroEveryTurn;
+    private Dictionary<string, GameObject> heroByName;
+
+    public StatusInfo pDamageBuff;
+    public StatusInfo pWeaknessDebuff;
+    public StatusInfo pFlameDebuff;
+    public StatusInfo pPoisonDebuff;
+    public StatusInfo pSilenceDebuff;
+    public StatusInfo pStunnedDebuff;
+    public StatusInfo pVulnerabilityByMonk;
+    public StatusInfo pVulnerabilityByBerserker;
+    public StatusInfo pPurifier;
+    public StatusInfo pShield;
+    public StatusInfo pDoubleDebuff;
+    public StatusInfo pDoubleDamageBuff;
+    public StatusInfo pDoubleAllBuff;
     // Start is called before the first frame update
     void Start()
     {
@@ -82,6 +99,7 @@ public class HeroManager : MonoBehaviour
 
         // 读取数据
         CsvReader pReader = new CsvReader(@"W:\Github\gameDev_final\HeroData.csv");
+        //CsvReader pReader = new CsvReader(@"HeroData.csv");
         while (!pReader.IsEnd())
         {
             HeroData pData = new HeroData();
@@ -98,13 +116,166 @@ public class HeroManager : MonoBehaviour
             pData.m_nSkillCostMove = pReader.GetInt("SkillCostMove");
             pData.m_nTotalAmountInGame = pReader.GetInt("TotalAmount");
             pData.m_strSkillDescription = pReader.GetString("SkillDescription");
+            pData.m_nTargetNum = pReader.GetInt("TargetNum");
+
 
             Instance.setHeroDataDic(pData.m_nID, pData);
 
             pReader.ReadNextLine();
         }
         pReader.Release();
+
+
+        //
+        InitStatusInfo();
     }
+
+    void InitStatusInfo()
+    {
+        InitDamageBuff();
+        InitWeaknessDebuff();
+        InitFlameDebuff();
+        InitPoisonDebuff();
+        InitSlienceDebuff();
+        InitPurifierBuff();
+        InitVulnerabilityByMonk();
+        InitVulnerabilityByBerserker();
+        InitShieldBuff();
+        InitDoubleDebuff();
+        InitDoubleDamageBuff();
+        InitDoubleAllBuff();
+    }
+
+    void InitDamageBuff() {
+        pDamageBuff = new StatusInfo();
+        pDamageBuff.strStatusName = "ezhu_paoxiao";
+        pDamageBuff.nTotalTurn = 1;
+        pDamageBuff.nMaxOverLapCount = 999;
+        pDamageBuff.bDebuff = false;
+        pDamageBuff.dicChangedAttr = new Dictionary<string, string>();
+        pDamageBuff.dicChangedAttr["damage"] = "50|1";
+    }
+
+    void InitWeaknessDebuff() {
+        pWeaknessDebuff = new StatusInfo();
+        pWeaknessDebuff.strStatusName = "ezhu_isHungry";
+        pWeaknessDebuff.nTotalTurn = 1;
+        pWeaknessDebuff.nMaxOverLapCount = 999;
+        pWeaknessDebuff.bDebuff = true;
+        pWeaknessDebuff.dicChangedAttr = new Dictionary<string, string>();
+        pWeaknessDebuff.dicChangedAttr["damage"] = "-30|-1";
+    }
+
+    void InitFlameDebuff() {
+        pFlameDebuff = new StatusInfo();
+        pFlameDebuff.strStatusName = "giveEnemyBuringDamage";
+        pFlameDebuff.nTotalTurn = 3;
+        pFlameDebuff.nMaxOverLapCount = 999;
+        pFlameDebuff.bDebuff = true;
+        pFlameDebuff.dicChangedAttr = new Dictionary<string, string>();
+        pFlameDebuff.dicChangedAttr["hp"] = "0|-10";
+    }
+
+    void InitPoisonDebuff() {
+        pPoisonDebuff = new StatusInfo();
+        pPoisonDebuff.strStatusName = "giveEnemyPoisonDamage";
+        pPoisonDebuff.nTotalTurn = 10;
+        pPoisonDebuff.nMaxOverLapCount = 999;
+        pPoisonDebuff.bDebuff = true;
+        pPoisonDebuff.dicChangedAttr = new Dictionary<string, string>();
+        pPoisonDebuff.dicChangedAttr["hp"] = "0|-5";
+    }
+
+    void InitSlienceDebuff() {
+        pSilenceDebuff = new StatusInfo();
+        pSilenceDebuff.strStatusName = "enemyCantDoSkill";
+        pSilenceDebuff.nTotalTurn = 1;
+        pSilenceDebuff.nMaxOverLapCount = 1;
+        pSilenceDebuff.bDebuff = true;
+        pSilenceDebuff.dicChangedAttr = new Dictionary<string, string>();
+        pSilenceDebuff.dicChangedAttr["slience"] = "0|0";
+    }
+
+    void InitPurifierBuff() {
+        pPurifier = new StatusInfo();
+        pPurifier.strStatusName = "eliminateAllDebuff";
+        pPurifier.nTotalTurn = 1;
+        pPurifier.nMaxOverLapCount = 1;
+        pPurifier.bDebuff = false;
+        pPurifier.dicChangedAttr = new Dictionary<string, string>();
+        pPurifier.dicChangedAttr["purifier"] = "0|0";
+    }
+
+    void InitVulnerabilityByMonk() {
+        pVulnerabilityByMonk = new StatusInfo();
+        pVulnerabilityByMonk.strStatusName = "MonkGiveVulnerability";
+        pVulnerabilityByMonk.nTotalTurn = 1;
+        pVulnerabilityByMonk.nMaxOverLapCount = 999;
+        pVulnerabilityByMonk.bDebuff = true;
+        pVulnerabilityByMonk.dicChangedAttr = new Dictionary<string, string>();
+        pVulnerabilityByMonk.dicChangedAttr["vulnerability"] = "50|0";
+    }
+
+    void InitVulnerabilityByBerserker() {
+        pVulnerabilityByBerserker = new StatusInfo();
+        pVulnerabilityByBerserker.strStatusName = "BerserkerGiveVulnerability";
+        pVulnerabilityByBerserker.nTotalTurn = 1;
+        pVulnerabilityByBerserker.nMaxOverLapCount = 999;
+        pVulnerabilityByBerserker.bDebuff = true;
+        pVulnerabilityByBerserker.dicChangedAttr = new Dictionary<string, string>();
+        pVulnerabilityByBerserker.dicChangedAttr["vulnerability"] = "30|0";
+    }
+
+    void InitShieldBuff() {
+        pShield = new StatusInfo();
+        pShield.strStatusName = "landGuardianGiveTeammateBuff";
+        pShield.nTotalTurn = 1;
+        pShield.nMaxOverLapCount = 999;
+        pShield.bDebuff = false;
+        pShield.dicChangedAttr = new Dictionary<string, string>();
+        pShield.dicChangedAttr["defend"] = "0|15";
+    }
+
+    void InitDoubleDebuff() {
+        pDoubleDebuff = new StatusInfo();
+        pDoubleDebuff.strStatusName = "DoubleDebuff";
+        pDoubleDebuff.nTotalTurn = 1;
+        pDoubleDebuff.nMaxOverLapCount = 999;
+        pDoubleDebuff.bDebuff = true;
+        pDoubleDebuff.dicChangedAttr = new Dictionary<string, string>();
+        pDoubleDebuff.dicChangedAttr["DoubleDebuff"] = "0|0";
+    }
+
+    void InitDoubleDamageBuff() {
+        pDoubleDamageBuff = new StatusInfo();
+        pDoubleDamageBuff.strStatusName = "DoubleDamageBuff";
+        pDoubleDamageBuff.nTotalTurn = 1;
+        pDoubleDamageBuff.nMaxOverLapCount = 999;
+        pDoubleDamageBuff.bDebuff = false;
+        pDoubleDamageBuff.dicChangedAttr = new Dictionary<string, string>();
+        pDoubleDamageBuff.dicChangedAttr["DoubleDamageBuff"] = "0|0";
+    }
+
+    void InitDoubleAllBuff() {
+        pDoubleAllBuff = new StatusInfo();
+        pDoubleAllBuff.strStatusName = "DoubleAllBuff";
+        pDoubleAllBuff.nTotalTurn = 1;
+        pDoubleAllBuff.nMaxOverLapCount = 999;
+        pDoubleAllBuff.bDebuff = false;
+        pDoubleAllBuff.dicChangedAttr = new Dictionary<string, string>();
+        pDoubleAllBuff.dicChangedAttr["DoubleAllBuff"] = "0|0";
+    }
+
+    void InitStunnedDebuff() {
+        pStunnedDebuff = new StatusInfo();
+        pStunnedDebuff.strStatusName = "stunnedDebuff";
+        pStunnedDebuff.nTotalTurn = 1;
+        pStunnedDebuff.nMaxOverLapCount = 999;
+        pStunnedDebuff.bDebuff = true;
+        pStunnedDebuff.dicChangedAttr = new Dictionary<string, string>();
+        pStunnedDebuff.dicChangedAttr["Stunned"] = "0|0";
+    }
+
 
     // Update is called once per frame
     void Update()
@@ -135,7 +306,23 @@ public class HeroManager : MonoBehaviour
         } else if (nPlayer == 1) {
             player1HeroObjList.Add(unit);
         }
-    } 
+    }
+
+    public void removeHero(int nPlayer, GameObject unit) {
+        if (nPlayer == 0) {
+            player0HeroObjList.Remove(unit);
+        } else if (nPlayer == 1) {
+            player1HeroObjList.Remove(unit);
+        }
+    }
+
+    public void addHeroByName(string name, GameObject hero) {
+        heroByName[name] = hero;
+    }
+
+    public HeroEntity.Heroes getHeroByName(string name) {
+        return heroByName[name].GetComponent<HeroEntity>().m_pHero;
+    }
 
     public int getCurrHeroNum(int nPlayer)
     {
@@ -154,7 +341,9 @@ public class HeroManager : MonoBehaviour
         randomHeroEveryTurn.Clear();
         for (int i = 0; i < 3; i++)
         {
-            int heroIndex = (int)Random.Range(0,21);
+            //int heroIndex = (int)Random.Range(0,21);
+            int heroIndex = (int)Random.Range(0, 16);
+            // int heroIndex = GlobalHeroIndex.eEntityType_ElfArcher;
             HeroData newRandomHeroData = getHeroDataDic(heroIndex);
             randomHeroEveryTurn.Add(newRandomHeroData);
             UIManager.Instance.heroCardList[i].GetComponent<HeroCard>().nType = heroIndex;
@@ -172,6 +361,7 @@ public class HeroManager : MonoBehaviour
         player0HeroObjList = new List<GameObject>();
         player1HeroObjList = new List<GameObject>();
         randomHeroEveryTurn = new List<HeroData>();
+        heroByName = new Dictionary<string, GameObject>();
     }
 }
 

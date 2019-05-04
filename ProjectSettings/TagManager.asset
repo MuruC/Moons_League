@@ -5,6 +5,8 @@ TagManager:
   serializedVersion: 2
   tags:
   - kingdomIcon
+  - Tavern
+  - actionButton
   layers:
   - Default
   - TransparentFX
