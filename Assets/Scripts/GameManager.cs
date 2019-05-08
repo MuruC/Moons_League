@@ -50,6 +50,10 @@ public class GameManager : MonoBehaviour
     public PlayerAlly.Players m_player1;
     public PlayerAlly.Players m_player2;
     public PlayerAlly.Players currPlayer;
+
+    public GameObject mouseController;
+    public GameObject tutorialController;
+    TutorialScript tutorialControllerScript;
     // Start is called before the first frame update
     void Start()
     {
@@ -83,6 +87,10 @@ public class GameManager : MonoBehaviour
         return tileObjectByIndex[indexToString];
     }
 
+    public Dictionary<string, GameObject> getTileObjByIndexDic() {
+        return tileObjectByIndex;
+    }
+
     public bool bContainThisTile(string name) {
         if (tileObjectByIndex.ContainsKey(name)) {
             return true;
@@ -98,14 +106,25 @@ public class GameManager : MonoBehaviour
             nTurn = 1;
             currPlayer = m_player2;
             currPlayer.resetEveryHeroInfoOnTurn();
-        }else if(nTurn == 1){
+            setCameraEveryTurn();
+            if (getCurrentTurn() == 0)
+            {
+                tutorialControllerScript.spawnPointAtKing(GameObject.Find("king2").transform.position.x, GameObject.Find("king2").transform.position.y);
+            }
+        }
+        else if(nTurn == 1){
             nTurn = 0;
             currPlayer = m_player1;
             currPlayer.resetEveryHeroInfoOnTurn();
+            setCameraEveryTurn();
             addCurrentTurnNum();
+
+            m_player1.modifyMoney(2);
+            m_player2.modifyMoney(2);
         }
         HeroManager.Instance.generateHeroEveryTurn();
         UIManager.Instance.setCardActiveEveryTurn();
+        mouseController.GetComponent<MouseController>().resetSelectedHeroObj();
     }
 
     public int getTurn() { return nTurn; }
@@ -123,6 +142,10 @@ public class GameManager : MonoBehaviour
 
     public void modifyTileHasUnit(Vector2Int tileIndex) {
         tileHasUnit.Remove(tileIndex);
+    }
+
+    public Dictionary<Vector2Int, GameObject> getTileHasUnitDic() {
+        return tileHasUnit;
     }
 
     public bool bTileHasUnit(Vector2Int tileIndex) {
@@ -154,6 +177,26 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    public Dictionary<Vector2Int, GameObject> getUnitInTileDic() {
+        return unitInTile;
+    }
+
+    public void setCameraEveryTurn() {
+        int x;
+        int y;
+        if (currPlayer.getBHasKingdom() == false)
+        {
+            x = currPlayer.getOriginalIndex().x;
+            y = currPlayer.getOriginalIndex().y;
+        }
+        else {
+            x = currPlayer.getKingdomIndex().x;
+            y = currPlayer.getKingdomIndex().y;
+        }
+        Vector3 startPos = getTileObjectByIndex("xIndex_" + x.ToString() + "yIndex_" + y.ToString()).transform.position;
+        GameObject.Find("myCamera").transform.position = startPos;
+    }
+
     void resetGameManager() {
         Instance = this;
         nTurn = 0;
@@ -164,5 +207,7 @@ public class GameManager : MonoBehaviour
         tileHasUnit = new Dictionary<Vector2Int, GameObject>();
         unitInTile = new Dictionary<Vector2Int, GameObject>();
         currPlayer = m_player1;
+
+        tutorialControllerScript = tutorialController.GetComponent<TutorialScript>();
     }
 }

@@ -8,16 +8,39 @@ public class GoblinMine : MonoBehaviour
     public int y;
     int attack;
     public int ally;
+    public GameObject warningTilePreb;
+    private List<GameObject> warningTileLst;
+    private bool hasSpawnWarningTile = false;
     // Start is called before the first frame update
-    void Start()
-    {
-        attack = HeroManager.Instance.getHeroDataDic(GlobalHeroIndex.eEntityType_GoblinTechies).m_nDamage;
-    }
 
     // Update is called once per frame
     void Update()
     {
-        
+        if (hasSpawnWarningTile == false) {
+            return;
+        }
+        setMineVisible();
+    }
+
+    private void Awake()
+    {
+        warningTileLst = new List<GameObject>();
+        attack = HeroManager.Instance.getHeroDataDic(GlobalHeroIndex.eEntityType_GoblinTechies).m_nDamage;
+    }
+
+    public void whenAwake() {
+        List<int> offset = new List<int> { -1, 0, 1 };
+        int offsetX = offset[(int)Random.Range(0, 3)];
+        int offsetY = 0;
+        if (offsetX != 0)
+        {
+            offsetY = 0;
+        }
+        else
+        {
+            offsetY = offset[(int)Random.Range(0, 3)];
+        }
+        warningTileIndex(offsetX, offsetY);
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
@@ -46,8 +69,67 @@ public class GoblinMine : MonoBehaviour
                 }
             }
             enemy_pHero.modifyHP(-attack);
-            Destroy(gameObject);
+            destroyThisObject();
         }
     }
 
+    public void destroyThisObject() {
+        for (int i = 0; i < warningTileLst.Count; i++)
+        {
+            Destroy(warningTileLst[i]);
+        }
+        warningTileLst.Clear();
+        Destroy(gameObject);
+    }
+
+    void warningTileIndex(int offsetX, int offsetY)
+    {
+        int a = x+offsetX;
+        int b = y+offsetY;
+        if (b % 2 == 1)
+        {
+            spawnWarningTile(a + 1, b);
+            spawnWarningTile(a, b + 1);
+            spawnWarningTile(a + 1, b + 1);
+            spawnWarningTile(a + 1, b - 1);
+            spawnWarningTile(a, b - 1);
+            spawnWarningTile(a - 1, b);
+            spawnWarningTile(a, b);
+        }
+        else
+        {
+            spawnWarningTile(a, b + 1);
+            spawnWarningTile(a + 1, b);
+            spawnWarningTile(a - 1, b + 1);
+            spawnWarningTile(a - 1, b);
+            spawnWarningTile(a - 1, b - 1);
+            spawnWarningTile(a, b - 1);
+            spawnWarningTile(a, b);
+        }
+        hasSpawnWarningTile = true;
+    }
+
+    void spawnWarningTile(int x, int y) {
+        string name = "xIndex_" + x.ToString() + "yIndex_" + y.ToString();
+        Vector2 pos = GameManager.Instance.getTileObjectByIndex(name).transform.position;
+        GameObject newTile = Instantiate(warningTilePreb, pos,Quaternion.identity);
+        newTile.SetActive(false);
+        warningTileLst.Add(newTile);
+    }
+
+    void setMineVisible() {
+        if (ally == GameManager.Instance.getTurn()) {
+            for (int i = 0; i < warningTileLst.Count; i++)
+            {
+                warningTileLst[i].SetActive(false);
+            }
+        }
+        else
+        {
+            for (int i = 0; i < warningTileLst.Count; i++)
+            {
+                warningTileLst[i].SetActive(true);
+            }
+        }
+    }
 }

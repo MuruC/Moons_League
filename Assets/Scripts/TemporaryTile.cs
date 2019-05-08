@@ -10,13 +10,6 @@ public class TemporaryTile : MonoBehaviour
     GameObject tileOfThisIndex;
     int nOldType;
     public int nNewType;
-    private void Awake()
-    {
-        initTurnNum = GameManager.Instance.getCurrentTurn();
-        tileOfThisIndex = GameManager.Instance.getTileObjectByIndex("xIndex_"+x.ToString()+"yIndex_"+y.ToString());
-        nOldType = tileOfThisIndex.GetComponent<TileScript>().terrainType;
-        tileOfThisIndex.GetComponent<TileScript>().terrainType = nNewType;
-    }
 
     // Update is called once per frame
     void Update()
@@ -29,5 +22,15 @@ public class TemporaryTile : MonoBehaviour
             tileOfThisIndex.GetComponent<TileScript>().terrainType = nOldType;
             Destroy(gameObject);
         }
+    }
+
+    public void thisTileAwake(int x_, int y_, int newType_) {
+        x = x_;
+        y = y_;
+        nNewType = newType_;
+        initTurnNum = GameManager.Instance.getCurrentTurn();
+        tileOfThisIndex = GameManager.Instance.getTileObjectByIndex("xIndex_" + x.ToString() + "yIndex_" + y.ToString());
+        nOldType = tileOfThisIndex.GetComponent<TileScript>().terrainType;
+        tileOfThisIndex.GetComponent<TileScript>().terrainType = nNewType;
     }
 }

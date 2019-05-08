@@ -42,7 +42,7 @@ CircleCollider2D:
   m_Enabled: 1
   m_Density: 1
   m_Material: {fileID: 0}
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_UsedByEffector: 0
   m_UsedByComposite: 0
   m_Offset: {x: 0, y: 0}
@@ -63,3 +63,5 @@ MonoBehaviour:
   x: 0
   y: 0
   ally: 0
+  warningTilePreb: {fileID: 9106429005434937173, guid: dda31e9e20e977d4d978a68593eade56,
+    type: 3}

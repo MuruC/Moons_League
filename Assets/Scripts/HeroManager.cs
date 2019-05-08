@@ -62,6 +62,11 @@ public struct HeroData
     public int m_nTotalAmountInGame;
     public string m_strSkillDescription;
     public int m_nTargetNum;
+    public string m_strSkillValue;
+    public string m_strActionName;
+    public int m_bNeedArrow;
+    public int m_nArrowColorIndex;
+
 }
 
 public class HeroManager : MonoBehaviour
@@ -88,6 +93,10 @@ public class HeroManager : MonoBehaviour
     public StatusInfo pDoubleDebuff;
     public StatusInfo pDoubleDamageBuff;
     public StatusInfo pDoubleAllBuff;
+    public StatusInfo pBackToPos;
+    public StatusInfo pSacrifice;
+
+    private List<int> m_lstRandomHeroIndex;
     // Start is called before the first frame update
     void Start()
     {
@@ -97,9 +106,11 @@ public class HeroManager : MonoBehaviour
         }
         resetHeroEntity();
 
+        m_lstRandomHeroIndex = new List<int>();
+
         // 读取数据
-        CsvReader pReader = new CsvReader(@"W:\Github\gameDev_final\HeroData.csv");
-        //CsvReader pReader = new CsvReader(@"HeroData.csv");
+        //CsvReader pReader = new CsvReader(@"W:\Github\gameDev_final\HeroData.csv");
+        CsvReader pReader = new CsvReader(@"HeroData.csv");
         while (!pReader.IsEnd())
         {
             HeroData pData = new HeroData();
@@ -117,6 +128,16 @@ public class HeroManager : MonoBehaviour
             pData.m_nTotalAmountInGame = pReader.GetInt("TotalAmount");
             pData.m_strSkillDescription = pReader.GetString("SkillDescription");
             pData.m_nTargetNum = pReader.GetInt("TargetNum");
+            pData.m_strSkillValue = pReader.GetString("SkillValueString");
+            pData.m_strActionName = pReader.GetString("ActionName");
+            pData.m_bNeedArrow = pReader.GetInt("NeedArrow");
+            pData.m_nArrowColorIndex = pReader.GetInt("ArrowColor");
+            //初始化随即列表
+            int nTotalCount = pData.m_nTotalAmountInGame;
+            for (int i = 0; i < nTotalCount; i++)
+            {
+                m_lstRandomHeroIndex.Add(pData.m_nID);
+            }
 
 
             Instance.setHeroDataDic(pData.m_nID, pData);
@@ -144,6 +165,8 @@ public class HeroManager : MonoBehaviour
         InitDoubleDebuff();
         InitDoubleDamageBuff();
         InitDoubleAllBuff();
+        InitBackToPos();
+        InitSacrifice();
     }
 
     void InitDamageBuff() {
@@ -153,7 +176,7 @@ public class HeroManager : MonoBehaviour
         pDamageBuff.nMaxOverLapCount = 999;
         pDamageBuff.bDebuff = false;
         pDamageBuff.dicChangedAttr = new Dictionary<string, string>();
-        pDamageBuff.dicChangedAttr["damage"] = "50|1";
+        pDamageBuff.dicChangedAttr["damage"] = "50|0";
     }
 
     void InitWeaknessDebuff() {
@@ -276,6 +299,25 @@ public class HeroManager : MonoBehaviour
         pStunnedDebuff.dicChangedAttr["Stunned"] = "0|0";
     }
 
+    void InitBackToPos() {
+        pBackToPos = new StatusInfo();
+        pBackToPos.strStatusName = "LordOfTimeSkill";
+        pBackToPos.nTotalTurn = 3;
+        pBackToPos.nMaxOverLapCount = 1;
+        pBackToPos.bDebuff = false;
+        pBackToPos.dicChangedAttr = new Dictionary<string, string>();
+        pBackToPos.dicChangedAttr["backToPos"] = "0|0";
+    }
+
+    void InitSacrifice() {
+        pSacrifice = new StatusInfo();
+        pSacrifice.strStatusName = "deathSacrifice";
+        pSacrifice.nTotalTurn = 3;
+        pSacrifice.nMaxOverLapCount = 1;
+        pSacrifice.bDebuff = false;
+        pSacrifice.dicChangedAttr = new Dictionary<string, string>();
+        pSacrifice.dicChangedAttr["deathSacrifice"] = "0|0";
+    }
 
     // Update is called once per frame
     void Update()
@@ -336,14 +378,33 @@ public class HeroManager : MonoBehaviour
         }
     }
 
+    public void removeHeroFromStock(int nIndex) {
+        m_lstRandomHeroIndex.Remove(nIndex);
+    }
+
+    public void addHeroCountInStock(int nHeroInex, int nCount) {
+        for (int i = 0; i < nCount; i++)
+        {
+            m_lstRandomHeroIndex.Add(nHeroInex);
+        }
+    }
+
     public void generateHeroEveryTurn()
     {
         randomHeroEveryTurn.Clear();
         for (int i = 0; i < 3; i++)
         {
+            List<int> lstRandomHero = new List<int>();
+            lstRandomHero = m_lstRandomHeroIndex;
+            if (lstRandomHero.Count <= 0)
+            {
+                return;
+            }
             //int heroIndex = (int)Random.Range(0,21);
-            int heroIndex = (int)Random.Range(0, 16);
-            // int heroIndex = GlobalHeroIndex.eEntityType_ElfArcher;
+            //int heroIndex = GlobalHeroIndex.eEntityType_DeathAlchemist;
+            int nIndex = (int)Random.Range(0, lstRandomHero.Count);
+            int heroIndex = lstRandomHero[nIndex];
+            lstRandomHero.Remove(nIndex);
             HeroData newRandomHeroData = getHeroDataDic(heroIndex);
             randomHeroEveryTurn.Add(newRandomHeroData);
             UIManager.Instance.heroCardList[i].GetComponent<HeroCard>().nType = heroIndex;

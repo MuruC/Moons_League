@@ -9,6 +9,8 @@ public class PlaceStructure : MonoBehaviour
     public List<GameObject> placeableGrid;
     GameObject mouseControllerObj;
     MouseController mouseControllerScript;
+    public GameObject tavernTutorialPrefab;
+    public GameObject workshopTutorialPrefab;
     // Start is called before the first frame update
     void Start()
     {
@@ -30,6 +32,10 @@ public class PlaceStructure : MonoBehaviour
                     {
                         GameObject ourHitObject = hit[i].collider.transform.gameObject;
                         if (ourHitObject.GetComponent<TileScript>() != null) {
+                            if (placeableGrid.Contains(ourHitObject) == false)
+                            {
+                                return;
+                            }
                             buildStructure(ourHitObject);
                         }
                     }
@@ -63,8 +69,9 @@ public class PlaceStructure : MonoBehaviour
     }
 
     void buildStructure(GameObject tile) {
-        gameObject.GetComponent<Structure>().x = tile.GetComponent<TileScript>().x;
-        gameObject.GetComponent<Structure>().y = tile.GetComponent<TileScript>().y;
+        Structure thisStructureScipt = gameObject.GetComponent<Structure>();
+        thisStructureScipt.x = tile.GetComponent<TileScript>().x;
+        thisStructureScipt.y = tile.GetComponent<TileScript>().y;
         Vector3 pos = tile.transform.position;
         gameObject.transform.position = pos;
         bMoveWithMouse = false;
@@ -74,6 +81,24 @@ public class PlaceStructure : MonoBehaviour
             placeableGrid[i].GetComponent<TileScript>().setColorAnime(GlobTileColorAnimeIndex.eTileColor_null);
         }
         placeableGrid.Clear();
-        GameManager.Instance.currPlayer.setTavernIndex(new Vector2Int(gameObject.GetComponent<Structure>().x, gameObject.GetComponent<Structure>().y));
+
+        if (thisStructureScipt.nType == GlobStructureType.eStructure_nTavern) {
+            GameManager.Instance.currPlayer.setTavernIndex(new Vector2Int(gameObject.GetComponent<Structure>().x, gameObject.GetComponent<Structure>().y));
+            GameObject tavernTutorial = Instantiate(tavernTutorialPrefab);
+            tavernTutorial.transform.position = new Vector2(pos.x, pos.y + 1);
+
+        } else if (thisStructureScipt.nType == GlobStructureType.eStructure_nWorkshop) {
+            GameManager.Instance.currPlayer.setWorkShopIndex(new Vector2Int(thisStructureScipt.x,thisStructureScipt.y));
+            GameObject workshopTutorial = Instantiate(workshopTutorialPrefab);
+            workshopTutorial.transform.position = new Vector2(pos.x, pos.y + 1);
+            if (GameManager.Instance.getTurn() == 0)
+            {
+                GameObject.Find("TutorialController").GetComponent<TutorialScript>().king1_buildWorkshop = true;
+            }
+            else
+            {
+                GameObject.Find("TutorialController").GetComponent<TutorialScript>().king2_buildWorkshop = true;
+            }
+        }
     }
 }

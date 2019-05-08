@@ -46,11 +46,27 @@ public class MovableUnit : MonoBehaviour
         velocity = Vector2.ClampMagnitude(velocity, dir.magnitude);
 
         transform.Translate(velocity);
+
+        m_pHero.setPos(new Vector2Int(indexX,indexY));
     }
 
     void whenUnitFirstArriveDestination() {
         if (thisUnitHasBeenClicked == false) {
             clearWalkableTileList();
+        }
+
+        int type = gameObject.GetComponent<HeroEntity>().nEntityType;
+        if (type == GlobalHeroIndex.eEntityType_Miner)
+        {
+            if (GameManager.Instance.getTileObjectByIndex("xIndex_"+ indexX.ToString() + "yIndex_"+indexY.ToString()).GetComponent<TileScript>().terrainType == GlobTileType.eTile_nGoldMine)
+            {
+                GameManager.Instance.currPlayer.modifyMoney(20);
+            }
+        }
+
+        if (GameManager.Instance.getTileObjectByIndex("xIndex_" + indexX.ToString() + "yIndex_" + indexY.ToString()).GetComponent<TileScript>().terrainType == GlobTileType.eTile_nLake)
+        {
+            gameObject.GetComponent<HeroEntity>().m_pHero.eliminateAllDebuffByName();
         }
     }
 

@@ -16,10 +16,12 @@ public class MouseController : MonoBehaviour
     HeroEntity thisHeroScript;
     MovableUnit thisHeroMovingScript;
     PlayerAlly.Players currPlayer;
+
     // Start is called before the first frame update
     void Start()
     {
         playerState = GlobPlayerAction.ePlayerState_Normal;
+
     }
 
 
@@ -29,6 +31,7 @@ public class MouseController : MonoBehaviour
         currPlayer = GameManager.Instance.currPlayer;
         clickMouseLeftButton();
         clickMouseRightButton();
+
     }
 
     private bool isMouseOverUI() {
@@ -64,12 +67,21 @@ public class MouseController : MonoBehaviour
                             if (ourHitObject.tag == "Tavern")
                             {
                                 if (playerState == GlobPlayerAction.ePlayerState_Normal) {
+                                    resetSelectedHeroObj();
                                     if (ourHitObject.GetComponent<Structure>().nPlayer != GameManager.Instance.getTurn()) {
                                         return;
                                     }
                                     UIManager.Instance.openTavernCanvas();
                                     playerState = GlobPlayerAction.ePlayerState_Normal;
                                 }
+                            }
+                            else if (ourHitObject.tag == "Workshop") {
+                                if (ourHitObject.GetComponent<Structure>().nPlayer != GameManager.Instance.getTurn())
+                                {
+                                    return;
+                                }
+                                clickOnWorkShop();
+                                playerState = GlobPlayerAction.ePlayerState_Normal;
                             }
                             else if (ourHitObject.tag == "kingdomIcon")
                             {
@@ -113,8 +125,25 @@ public class MouseController : MonoBehaviour
             thisHeroScript.setAnime(true);
             thisHeroMovingScript.thisUnitHasBeenClicked = true;
             selectedUnitObj = pSelectedHero;
+            if (thisHeroScript.nEntityType == GlobalHeroIndex.eEntityType_King)
+            {
+                if (thisHeroScript.nAlign == 0)
+                {
+                    GameObject.Find("TutorialController").GetComponent<TutorialScript>().modifyPressKing1(1);
+                }
+                else
+                {
+                    GameObject.Find("TutorialController").GetComponent<TutorialScript>().modifyPressKing2(1);
+                }
+            }
+            if (thisHeroScript.m_pHero.getCurrentMoveStep() > 0)
+            {
+                walkableTileIndex();
+            }
+            else {
 
-            walkableTileIndex();
+            }
+
         } else if (playerState == GlobPlayerAction.ePlayerState_DoAction) {
             HeroEntity targetHeroScript = pSelectedHero.GetComponent<HeroEntity>();
             int nType = thisHeroScript.nEntityType;
@@ -144,6 +173,7 @@ public class MouseController : MonoBehaviour
                 if (thisHeroMovingScript.walkableTiles.Contains(pTile)) {
                     Vector2Int preTileIndex = new Vector2Int(thisHeroMovingScript.indexX, thisHeroMovingScript.indexY);
                     GameManager.Instance.modifyTileHasUnit(preTileIndex);
+                    GameManager.Instance.modifyUnitInTile(preTileIndex);
                     thisHeroMovingScript.destination = pTile.transform.position;
                     thisHeroMovingScript.destinationXIndex = thisTileScript.x;
                     thisHeroMovingScript.destinationYIndex = thisTileScript.y;
@@ -151,6 +181,12 @@ public class MouseController : MonoBehaviour
                     thisHeroMovingScript.indexY = thisTileScript.y;
                     Vector2Int tileIndex = new Vector2Int(thisTileScript.x, thisTileScript.y);
                     GameManager.Instance.setTileHasUnit(tileIndex, pTile);
+                    GameManager.Instance.setUnitInTile(tileIndex,selectedUnitObj);
+                    thisHeroScript.m_pHero.modifyCurrentMoveStep(-1);
+                    if (thisHeroScript.nEntityType == GlobalHeroIndex.eEntityType_King)
+                    {
+                        GameManager.Instance.currPlayer.setOriginalIndex(new Vector2Int(thisTileScript.x,thisTileScript.y));
+                    }
                 }
             }
         }
@@ -166,6 +202,9 @@ public class MouseController : MonoBehaviour
     }
 
     public void resetSelectedHeroObj() {
+        if (selectedUnitObj == null) {
+            return;
+        }
         selectedUnitObj = null;
         for (int i = 0; i < thisHeroMovingScript.walkableTiles.Count; i++)
         {
@@ -198,6 +237,8 @@ public class MouseController : MonoBehaviour
         }
     }
 
+
+
     public void clickActionButton(RaycastResult thisRaycastResult) {
         if (thisHeroScript == null) {
             return;
@@ -207,14 +248,31 @@ public class MouseController : MonoBehaviour
         thisHeroMovingScript.clearWalkableTileList();
     }
 
+
     void pickCard(RaycastResult thisRaycastResult) {
         if (currPlayer.getCurrHeroNum() >= currPlayer.getMaxHeroNum()) {
             return;
         }
+        playerState = GlobPlayerAction.ePlayerState_Building;
         GameObject thisHeroCard = thisRaycastResult.gameObject;
         HeroCard thisHeroCardScript = thisHeroCard.GetComponent<HeroCard>();
+        int nIndex = thisHeroCardScript.nType;
+        HeroManager.Instance.removeHeroFromStock(nIndex);
         thisHeroCardScript.setUnactive();
         thisHeroCardScript.spawnHero();
+        UIManager.Instance.exitTavernCanvas();
+
+        int nMoney = HeroManager.Instance.getHeroDataDic(nIndex).m_nMoneyTobuy;
+        GameManager.Instance.currPlayer.modifyMoney(-nMoney);
+    }
+
+    void clickOnWorkShop() {
+        if (currPlayer.getCurrHeroNum() >= currPlayer.getMaxHeroNum())
+        {
+            return;
+        }
+
+        UnitSpawner.GetComponent<UnitSpawner>().spawnHero(GlobalHeroIndex.eEntityType_Miner);
     }
 
     void enterKingdom() {
@@ -241,12 +299,14 @@ public class MouseController : MonoBehaviour
         if (thisStructureCardScript.nType == GlobStructureType.eStructure_nFarm)
         {
             newBuilding = Instantiate(farmPrefab,mouseWorldCoords,Quaternion.identity);
+            currPlayer.modifyMaxHeroNum(1);
         }
         PlaceStructure placeStructureScript = newBuilding.GetComponent<PlaceStructure>();
         placeStructureScript.bMoveWithMouse = true;
         index_GridCanBuildStructure(placeStructureScript);
         UIManager.Instance.exitKingdomCanvas();
 
+        currPlayer.modifyMoney(-100);
         currPlayer.modifyCurrStrutureNum(1);
     }
 
@@ -327,6 +387,15 @@ public class MouseController : MonoBehaviour
                     if (pObj.GetComponent<HeroEntity>() != null)
                     {
                         return true;
+                    }
+                    if (pObj.GetComponent<TileScript>() != null)
+                    {
+                        int x = pObj.GetComponent<TileScript>().x;
+                        int y = pObj.GetComponent<TileScript>().y;
+                        if (GameManager.Instance.bTileHasUnit(new Vector2Int(x,y)))
+                        {
+                            return true;
+                        }
                     }
                 }
             }

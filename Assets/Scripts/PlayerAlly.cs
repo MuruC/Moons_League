@@ -9,7 +9,7 @@ public class PlayerAlly : MonoBehaviour
 
     public class Players {
         private int playerIndex;
-        private int currentMoney;
+        private int currentMoney = 250;
         private int maxHeroNum = 5;
         private int currHeroNum = 0;
         private int maxStructureNum = 2;
@@ -17,8 +17,13 @@ public class PlayerAlly : MonoBehaviour
         private List<GameObject> heroList = new List<GameObject>();
         private int tavernIndexX;
         private int tavernIndexY;
+        private Vector2Int workshopIndex;
+        private Vector2Int originalIndex;
+        private Vector2Int kingdomIndex;
+        private bool bHasKindom;
         public Players(int nIndex) {
             playerIndex = nIndex;
+            bHasKindom = false;
         }
         public int getPlayerIndex() {
             return playerIndex;
@@ -69,6 +74,12 @@ public class PlayerAlly : MonoBehaviour
             }
         }
 
+        public void removeHero(GameObject heroObj)
+        {
+            heroList.Remove(heroObj);
+            currHeroNum -= 1;
+        }
+
         public void setTavernIndex(Vector2Int index) {
             tavernIndexX = index.x;
             tavernIndexY = index.y;
@@ -79,11 +90,44 @@ public class PlayerAlly : MonoBehaviour
             return index;
         }
 
+        public void setWorkShopIndex(Vector2Int index) {
+            workshopIndex = index;
+        }
+
+        public Vector2Int getWorkshopIndex() {
+            return workshopIndex;
+        }
+
+
         public void resetEveryHeroInfoOnTurn() {
             for (int i = 0; i < heroList.Count; i++)
             {
                 heroList[i].GetComponent<HeroEntity>().resetHeroInfoEveryTurn();
             }
+        }
+
+        public void setOriginalIndex(Vector2Int value) {
+            originalIndex = value;
+        }
+
+        public Vector2Int getOriginalIndex() {
+            return originalIndex;
+        }
+
+        public void setKingdomIndex(Vector2Int value) {
+            kingdomIndex = value;
+        }
+
+        public Vector2Int getKingdomIndex() {
+            return kingdomIndex;
+        }
+
+        public void setHasKingdom(bool value) {
+            bHasKindom = value;
+        }
+
+        public bool getBHasKingdom() {
+            return bHasKindom;
         }
     }
 

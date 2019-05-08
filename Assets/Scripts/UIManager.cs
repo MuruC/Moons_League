@@ -9,6 +9,8 @@ public class UIManager : MonoBehaviour
     public GameObject mouseController;
     public List<Sprite> tileSprites;
     public List<Sprite> heroIconOnMapSrpites;
+    public List<Sprite> heroChips;
+    public Text currentMoneyText;
     [Header("Kingdom")]
     public GameObject kingdomCanvas;
     [Header("Tavern")]
@@ -21,6 +23,13 @@ public class UIManager : MonoBehaviour
     public Text heroNameText;
     public Text currHPText;
     public Text currMoveText;
+    public Text takeMoveText;
+    public Text skillValueText;
+    public Text ActionNameText;
+    public GameObject heroInformationPanel;
+    Animator heroInformationPnelAnime;
+    [Header("arrowColor")]
+    public List<Color32> arrowColorLst;
     // Start is called before the first frame update
     void Start()
     {
@@ -33,10 +42,33 @@ public class UIManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Space)) {
-            exitKingdomCanvas();
+        if (GameManager.Instance.currPlayer != null)
+        {
+            currentMoneyText.text = GameManager.Instance.currPlayer.getMoney().ToString();
         }
+
+
+        if (mouseController == false || mouseController.GetComponent<MouseController>() == false)
+        {
+            return;
+        }
+        if (mouseController.GetComponent<MouseController>().selectedUnitObj == null)
+        {
+            heroInformationPnelAnime.SetBool("bSelectedUnitobj",false);
+            return;
+        }
+
+        if (mouseController.GetComponent<MouseController>().selectedUnitObj != null)
+        {
+            heroInformationPnelAnime.SetBool("bSelectedUnitobj", true);
+        }
+
+        GameObject pSelectedHero = mouseController.GetComponent<MouseController>().selectedUnitObj;
+        setHeroInformation(pSelectedHero);      
+
     }
+
+   
 
     public void openKingdomCanvas() {
         kingdomCanvas.SetActive(true);
@@ -77,14 +109,17 @@ public class UIManager : MonoBehaviour
         HeroData thisHeroData = HeroManager.Instance.getHeroDataDic(nEntityType);
         int currHP = m_pHero.getCurrHP();
         int currMoveStep = m_pHero.getCurrentMoveStep();
-
         heroNameText.text = thisHeroData.m_strName;
         currHPText.text = currHP.ToString();
         currMoveText.text = currMoveStep.ToString();
+        takeMoveText.text = thisHeroData.m_nSkillCostMove.ToString();
+        skillValueText.text = thisHeroData.m_strSkillValue;
+        ActionNameText.text = thisHeroData.m_strActionName;
     }
 
 
     void resetUIManager() {
         Instance = this;
+        heroInformationPnelAnime = heroInformationPanel.GetComponent<Animator>();
     }
 }

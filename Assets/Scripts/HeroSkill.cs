@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
+using System.Linq;
 public class HeroSkill : MonoBehaviour
 {
     public static HeroSkill Instance;
@@ -17,6 +17,9 @@ public class HeroSkill : MonoBehaviour
 
     public GameObject goblinMinePrefab;
     public GameObject temporaryTilePrefab;
+    public GameObject paladinEffectPrefab;
+    public GameObject arrowPrefab;
+    public GameObject pointAtKingdomPrefab;
 
     //int targetNum;
     public int currChooseTargetNum = 0;
@@ -47,6 +50,30 @@ public class HeroSkill : MonoBehaviour
                 return;
             }
 
+            
+            if (selectedHero.GetComponent<HeroEntity>().nEntityType == GlobalHeroIndex.eEntityType_Paladin)
+            {
+                if (GameObject.Find(selectedHero.name + "paladinEffect") == null) {
+                    GameObject paladinEffect = Instantiate(paladinEffectPrefab, selectedHero.transform.position, Quaternion.identity);
+                    paladinEffect.GetComponent<Animator>().SetInteger("currentMove", currMoveStep);
+                    paladinEffect.name = selectedHero.name + "paladinEffect";
+
+                }
+            }
+
+            if (GameObject.Find(selectedHero.name + "arrow") == null) {
+                if (HeroManager.Instance.getHeroDataDic(heroIndex).m_bNeedArrow == 0)
+                {
+                    GameObject actionArrow = Instantiate(arrowPrefab,selectedHero.transform.position,Quaternion.identity);
+                    actionArrow.name = selectedHero.name + "arrow";
+                    Color32 arrowColor = new Color32(UIManager.Instance.arrowColorLst[HeroManager.Instance.getHeroDataDic(heroIndex).m_nArrowColorIndex].r, 
+                        UIManager.Instance.arrowColorLst[HeroManager.Instance.getHeroDataDic(heroIndex).m_nArrowColorIndex].g,
+                        UIManager.Instance.arrowColorLst[HeroManager.Instance.getHeroDataDic(heroIndex).m_nArrowColorIndex].b,255);
+                    //actionArrow.GetComponent<SpriteRenderer>().color = UIManager.Instance.arrowColorLst[HeroManager.Instance.getHeroDataDic(heroIndex).m_nArrowColorIndex];
+                    actionArrow.GetComponent<SpriteRenderer>().color = arrowColor;
+                }
+            }
+
             if (currChooseTargetNum < nNeedTargetNum)
             {
                 return;
@@ -54,6 +81,12 @@ public class HeroSkill : MonoBehaviour
 
             releaseHeroSkill(heroIndex);
 
+            if (GameObject.Find(selectedHero.name + "arrow") != null)
+            {
+                Destroy(GameObject.Find(selectedHero.name + "arrow"));
+            }
+
+            
             if (bDoneSkill) {
                 selectedHero.GetComponent<HeroEntity>().m_pHero.modifyCurrentMoveStep(-nSkillNeedStep);
             }
@@ -155,56 +188,179 @@ public class HeroSkill : MonoBehaviour
         thisNewGoblinMineScript.y = selectedHeroMovingScript.indexY;
         thisNewGoblinMineScript.ally = selectedHeroEntityScript.nAlign;
         selectedHeroEntityScript.addGoblinMineToList(newGoblinMine);
+        thisNewGoblinMineScript.whenAwake();
         bDoneSkill = true;
     }
 
     void skill_Paladin() {
         GameObject selectedPaladin = mouseController.GetComponent<MouseController>().selectedUnitObj;
         GameObject pTile = aimedTargetList[0];
+        MovableUnit paladinMovingScript = selectedPaladin.GetComponent<MovableUnit>();
 
-        int x = selectedPaladin.GetComponent<MovableUnit>().indexX;
-        int y = selectedPaladin.GetComponent<MovableUnit>().indexY;
+        int x = paladinMovingScript.indexX;
+        int y = paladinMovingScript.indexY;
 
-        if (y % 2 == 1) {
-            Vector2 dir1 = new Vector2(1,0).normalized;
-            Vector2 dir2 = new Vector2(0, -1).normalized;
-            Vector2 dir3 = new Vector2(-1,-1).normalized;
-            Vector2 dir4 = new Vector2(-1,0).normalized;
-            Vector2 dir5 = new Vector2(-1,1).normalized;
-            Vector2 dir6 = new Vector2(0, 1).normalized;
-            //List<Vector2>dirList = new List<Vector2> { dir1,dir2,dir3,dir4,dir5,dir6};
-            Vector2 getDir = new Vector2(pTile.GetComponent<TileScript>().x - selectedPaladin.GetComponent<MovableUnit>().indexX,
-                    pTile.GetComponent<TileScript>().y - selectedPaladin.GetComponent<MovableUnit>().indexY);
-            int getStepNum = selectedPaladin.GetComponent<HeroEntity>().m_pHero.getCurrentMoveStep();
-            List<GameObject> passTile = new List<GameObject>();
-            bool bCrash = false;
+        int tileX = pTile.GetComponent<TileScript>().x;
+        int tileY = pTile.GetComponent<TileScript>().y;
+        Dictionary<string, GameObject> tileByIndexDic = GameManager.Instance.getTileObjByIndexDic();
+        GameObject heroTile = tileByIndexDic["xIndex_" + x.ToString() + "yIndex_"+y.ToString()];
+        Dictionary<Vector2Int, GameObject> unitInTileDic = GameManager.Instance.getUnitInTileDic();
 
-            if (getDir == dir1) {
-                int passTileNum = 0;
-                for (int i = 0; i < getStepNum; i++)
-                {
-                    if (bCrash == false) {
-                        int a = x + 1;
-                        int b = y;
-                        GameObject thisTile = GameManager.Instance.getTileObjectByIndex("xIndex_" + a.ToString()+"yIndex_"+b.ToString());
-                        if (thisTile.GetComponent<TileScript>().terrainType == GlobTileType.eTile_nSea || thisTile.GetComponent<TileScript>().terrainType == GlobTileType.eTile_nObstacle)
+        if (GameManager.Instance.bTileHasUnit(new Vector2Int(tileX,tileY)))
+        {
+            bDoneSkill = false;
+            return;
+        }
+
+        Vector2 dir1;
+        Vector2 dir2;
+        Vector2 dir3;
+        Vector2 dir4;
+        Vector2 dir5;
+        Vector2 dir6;
+        if (y % 2 == 1)
+        {
+
+           dir1 = getDirection(selectedPaladin,1,0);
+           dir2 = getDirection(selectedPaladin,1, -1);
+           dir3 = getDirection(selectedPaladin,0, -1);
+           dir4 = getDirection(selectedPaladin,-1, 0);
+           dir5 = getDirection(selectedPaladin,0, 1);
+           dir6 = getDirection(selectedPaladin, 1, 1);
+;
+        }
+        else
+        {
+           
+            dir1 = getDirection(selectedPaladin,1, 0);
+            dir2 = getDirection(selectedPaladin,0, -1);
+            dir3 = getDirection(selectedPaladin,-1, -1);
+            dir4 = getDirection(selectedPaladin,-1, 0);
+            dir5 = getDirection(selectedPaladin,-1, 1);
+            dir6 = getDirection(selectedPaladin, 0, 1);
+        }
+        List<Vector2>dirList = new List<Vector2> { dir1,dir2,dir3,dir4,dir5,dir6};
+        Vector2 myHeroTilePos = heroTile.transform.position;
+        Vector2 getDir = new Vector2(pTile.transform.position.x - heroTile.transform.position.x,
+                pTile.transform.position.y - heroTile.transform.position.y).normalized;
+        float fDist = Vector2.Distance(pTile.transform.position,heroTile.transform.position);
+        int getStepNum = selectedPaladin.GetComponent<HeroEntity>().m_pHero.getCurrentMoveStep();
+        float fOffset = 0.05f;
+        float fScale = 1.375f;
+        bool bCrash = false;
+        bool bMoving = false;
+        for (int i = 0; i < dirList.Count; i++)
+        {
+            if (dirList[i] == null)
+            {
+                continue;
+            }
+            if (getDir != dirList[i])
+            {
+                continue;
+            }
+            if (getDir == dirList[i])
+            {
+                if (fDist <= getStepNum * fScale + fOffset) {
+                    bMoving = true;
+                    for (int a = 0; a < tileByIndexDic.Count; a++)
+                    {
+                        GameObject thisTile = tileByIndexDic.ElementAt(a).Value;
+                        Vector2 tilePos = thisTile.transform.position;
+                        Vector2 dir_ = new Vector2(tilePos.x - myHeroTilePos.x, tilePos.y - myHeroTilePos.y).normalized;
+                        float fDist_ = Vector2.Distance(myHeroTilePos, tilePos);
+                        if (dir_ == getDir)
                         {
-                            bCrash = true;
-                        }
-                        else {
-                            passTile.Add(thisTile);
-                            passTileNum += 1;
+                            float fOffset_ = 0.1f;
+                            if (fDist_ < fScale * getStepNum - fOffset_)
+                            {
+                                int thisTileX = thisTile.GetComponent<TileScript>().x;
+                                int thisTileY = thisTile.GetComponent<TileScript>().y;
+                                Vector2Int thisTileIndex = new Vector2Int(thisTileX,thisTileY);
+                                for (int b = 0; b < unitInTileDic.Count; b++)
+                                {
+                                    if (unitInTileDic.ElementAt(b).Key == thisTileIndex && Vector2.Distance(myHeroTilePos, tilePos) < fDist)
+                                    {
+                                        HeroEntity passUnit = unitInTileDic[thisTileIndex].GetComponent<HeroEntity>();
+                                        if (passUnit.nAlign != selectedPaladin.GetComponent<HeroEntity>().nAlign)
+                                        {
+                                            attack(selectedPaladin, unitInTileDic[thisTileIndex]);
+                                        }
+                                    }
+                                }
+                                if ((thisTile.GetComponent<TileScript>().terrainType == GlobTileType.eTile_nObstacle
+                                    || thisTile.GetComponent<TileScript>().terrainType == GlobTileType.eTile_nSea) && Vector2.Distance(myHeroTilePos, tilePos) < fDist)
+                                {
+                                    bCrash = true;
+                                    Debug.Log("you can't aim the hero behind obstacle!");
+                                    Debug.Log("obstacle: x_ " + thisTile.GetComponent<TileScript>().x + " y_" + thisTile.GetComponent<TileScript>().y);
+                                    Debug.Log("fDist_"+fDist + " HeroTilePos" + myHeroTilePos + " thisTilePos_"+tilePos);
+                                    //bMoving = false;
+                                }
+                            }
                         }
                     }
+
                 }
-                
             }
         }
+        if (bCrash)
+        {
+            Debug.Log("crash to obstacle!");
+            return;
+        }
+
+        if (bMoving == false)
+        {
+            Debug.Log("bMoving = false!");
+            return;
+        }
+
+        GameManager.Instance.modifyTileHasUnit(new Vector2Int(x,y));
+        GameManager.Instance.modifyUnitInTile(new Vector2Int(x, y));
+
+        GameManager.Instance.setTileHasUnit(new Vector2Int(tileX,tileY),pTile);
+        GameManager.Instance.setUnitInTile(new Vector2Int(tileX, tileY),selectedPaladin);
+        paladinMovingScript.destination = pTile.transform.position;
+        paladinMovingScript.destinationXIndex = tileX;
+        paladinMovingScript.destinationYIndex = tileY;
+        paladinMovingScript.indexX = tileX;
+        paladinMovingScript.indexY = tileY;
+
+        if (GameObject.Find(selectedHero.name + "paladinEffect") != null)
+        {
+            Destroy(GameObject.Find(selectedHero.name + "paladinEffect"));
+        }
+
         bDoneSkill = true;
-    }                                             
+    }
+
+    Vector2 getDirection(GameObject selectedHero, int offsetX, int offsetY) {
+        Vector2 heroPos = selectedHero.transform.position;
+        int x = selectedHero.GetComponent<MovableUnit>().indexX;
+        int y = selectedHero.GetComponent<MovableUnit>().indexY;
+        int newX = x + offsetX;
+        int newY = y + offsetY;
+        Vector2 dir;
+        if (newX < 0 || newX >= GameManager.Instance.width || newY < 0 || newY >= GameManager.Instance.height)
+        {
+            dir = new Vector2(999, 998);
+        }
+        else
+        {
+            Vector2 tilePos = GameManager.Instance.getTileObjectByIndex("xIndex_" + newX.ToString() + "yIndex_" + newY.ToString()).transform.position;
+            dir = new Vector2(tilePos.x - heroPos.x, tilePos.y - heroPos.y).normalized;
+        }
+        return dir;
+    }
 
     void skill_WitchDoctor() {
         if (aimedTargetList[0].GetComponent<HeroEntity>().nAlign != selectedHero.GetComponent<HeroEntity>().nAlign)
+        {
+            bDoneSkill = false;
+            return;
+        }
+        if (aimedObjWithinRange(selectedHero, aimedTargetList[0], 0) == false)
         {
             bDoneSkill = false;
             return;
@@ -218,12 +374,22 @@ public class HeroSkill : MonoBehaviour
             bDoneSkill = false;
             return;
         }
+        if (aimedObjWithinRange(selectedHero, aimedTargetList[0], 0) == false)
+        {
+            bDoneSkill = false;
+            return;
+        }
         aimedTargetList[0].GetComponent<HeroEntity>().m_pHero.addStatus(selectedHero.name,HeroManager.Instance.pDamageBuff);
         bDoneSkill = true;
     }
 
     void skill_Snaker() {
         if (aimedTargetList[0].GetComponent<HeroEntity>().nAlign == selectedHero.GetComponent<HeroEntity>().nAlign)
+        {
+            bDoneSkill = false;
+            return;
+        }
+        if (aimedObjWithinRange(selectedHero, aimedTargetList[0], 0) == false)
         {
             bDoneSkill = false;
             return;
@@ -238,38 +404,58 @@ public class HeroSkill : MonoBehaviour
             bDoneSkill = false;
             return;
         }
+        if (!aimedObjWithinRange(selectedHero, aimedTargetList[0], 0))
+        {
+            bDoneSkill = false;
+            return;
+        }
         aimedTargetList[0].GetComponent<HeroEntity>().m_pHero.addStatus(selectedHero.name,HeroManager.Instance.pStunnedDebuff);
         bDoneSkill = true;
     }
 
     void skill_SandShaper() {
+        if (!aimedObjWithinRange(selectedHero, aimedTargetList[0], 1))
+        {
+            bDoneSkill = false;
+            return;
+        }
         TileScript aimedTileScipt = aimedTargetList[0].GetComponent<TileScript>();
         int x = aimedTileScipt.x;
         int y = aimedTileScipt.y;
+        if (GameManager.Instance.bTileHasUnit(new Vector2Int(x, y))) {
+            bDoneSkill = false;
+            return;
+        }
         GameObject newTile = Instantiate(temporaryTilePrefab, aimedTargetList[0].transform.position, Quaternion.identity);
         newTile.GetComponent<SpriteRenderer>().color = Color.red;
         TemporaryTile newTileScript = newTile.GetComponent<TemporaryTile>();
-        newTileScript.x = x;
-        newTileScript.y = y;
-        newTileScript.nNewType = GlobTileType.eTile_nObstacle;
+        newTileScript.thisTileAwake(x,y, GlobTileType.eTile_nObstacle);
         bDoneSkill = true;
     }
 
     void skill_Mole() {
+        if (!aimedObjWithinRange(selectedHero, aimedTargetList[0], 1))
+        {
+            bDoneSkill = false;
+            return;
+        }
         TileScript aimedTileScipt = aimedTargetList[0].GetComponent<TileScript>();
         int x = aimedTileScipt.x;
         int y = aimedTileScipt.y;
         GameObject newTile = Instantiate(temporaryTilePrefab, aimedTargetList[0].transform.position, Quaternion.identity);
         newTile.GetComponent<SpriteRenderer>().color = Color.yellow;
         TemporaryTile newTileScript = newTile.GetComponent<TemporaryTile>();
-        newTileScript.x = x;
-        newTileScript.y = y;
-        newTileScript.nNewType = GlobTileType.eTile_nWalkable;
+        newTileScript.thisTileAwake(x, y, GlobTileType.eTile_nWalkable);
         bDoneSkill = true;
     }
 
     void skill_Monk() {
         if (aimedTargetList[0].GetComponent<HeroEntity>().nAlign == selectedHero.GetComponent<HeroEntity>().nAlign)
+        {
+            bDoneSkill = false;
+            return;
+        }
+        if (!aimedObjWithinRange(selectedHero, aimedTargetList[0], 0))
         {
             bDoneSkill = false;
             return;
@@ -281,13 +467,17 @@ public class HeroSkill : MonoBehaviour
     }
 
     void skill_Flame() {
-        //AOE还没写！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！
-        //attack(selectedHero, aimedHero);
-        //aimedHero.GetComponent<HeroEntity>().m_pHero.addStatus(selectedHero.name,HeroManager.Instance.pFlameDebuff);
+        aoeAttack(1, selectedHero);
+        bDoneSkill = true;
     }
 
     void skill_Lich() {
         if (aimedTargetList[0].GetComponent<HeroEntity>().nAlign == selectedHero.GetComponent<HeroEntity>().nAlign)
+        {
+            bDoneSkill = false;
+            return;
+        }
+        if (!aimedObjWithinRange(selectedHero, aimedTargetList[0], 0))
         {
             bDoneSkill = false;
             return;
@@ -303,12 +493,22 @@ public class HeroSkill : MonoBehaviour
             bDoneSkill = false;
             return;
         }
+        if (!aimedObjWithinRange(selectedHero, aimedTargetList[0], 0))
+        {
+            bDoneSkill = false;
+            return;
+        }
         aimedTargetList[0].GetComponent<HeroEntity>().m_pHero.addStatus(selectedHero.name,HeroManager.Instance.pSilenceDebuff);
         bDoneSkill = true;
     }
 
     void skill_Berserker() {
         if (aimedTargetList[0].GetComponent<HeroEntity>().nAlign == selectedHero.GetComponent<HeroEntity>().nAlign)
+        {
+            bDoneSkill = false;
+            return;
+        }
+        if (!aimedObjWithinRange(selectedHero, aimedTargetList[0], 0))
         {
             bDoneSkill = false;
             return;
@@ -327,12 +527,22 @@ public class HeroSkill : MonoBehaviour
             bDoneSkill = false;
             return;
         }
+        if (!aimedObjWithinRange(selectedHero, aimedTargetList[0], 0))
+        {
+            bDoneSkill = false;
+            return;
+        }
         attack(selectedHero, aimedTargetList[0]);
         bDoneSkill = true;
     }
 
     void skill_Cleric() {
         if (aimedTargetList[0].GetComponent<HeroEntity>().nAlign != selectedHero.GetComponent<HeroEntity>().nAlign)
+        {
+            bDoneSkill = false;
+            return;
+        }
+        if (!aimedObjWithinRange(selectedHero, aimedTargetList[0], 0))
         {
             bDoneSkill = false;
             return;
@@ -352,12 +562,22 @@ public class HeroSkill : MonoBehaviour
             bDoneSkill = false;
             return;
         }
+        if (!aimedObjWithinRange(selectedHero, aimedTargetList[0], 0))
+        {
+            bDoneSkill = false;
+            return;
+        }
         aimedTargetList[0].GetComponent<HeroEntity>().m_pHero.addStatus(selectedHero.name,HeroManager.Instance.pPurifier);
         bDoneSkill = true;
     }
 
     void skill_LandGuardian() {
         if (aimedTargetList[0].GetComponent<HeroEntity>().nAlign != selectedHero.GetComponent<HeroEntity>().nAlign)
+        {
+            bDoneSkill = false;
+            return;
+        }
+        if (!aimedObjWithinRange(selectedHero, aimedTargetList[0], 0))
         {
             bDoneSkill = false;
             return;
@@ -376,6 +596,16 @@ public class HeroSkill : MonoBehaviour
             bDoneSkill = false;
             return;
         }
+        if (!aimedObjWithinRange(selectedHero, aimedTargetList[0], 0))
+        {
+            bDoneSkill = false;
+            return;
+        }
+        if (!aimedObjWithinRange(selectedHero, aimedTargetList[1], 0))
+        {
+            bDoneSkill = false;
+            return;
+        }
         if (aimedTarget1Script.nAlign == selectedHeroScript.nAlign) {
             aimedTarget2Script.m_pHero.stealStatus(selectedHero.name);
         } else if (aimedTarget2Script.nAlign == selectedHeroScript.nAlign) {
@@ -385,17 +615,41 @@ public class HeroSkill : MonoBehaviour
     }
 
     void skill_DeathAlchemist() {
+        HeroEntity aimedTarget1Script = aimedTargetList[0].GetComponent<HeroEntity>();
+        HeroEntity selectedHeroScript = selectedHero.GetComponent<HeroEntity>();
 
-
+        if (aimedTarget1Script.nAlign != selectedHeroScript.nAlign)
+        {
+            bDoneSkill = false;
+            return;
+        }
+        if (!aimedObjWithinRange(selectedHero, aimedTargetList[0], 0))
+        {
+            bDoneSkill = false;
+            return;
+        }
+        aimedTarget1Script.m_pHero.addStatus(selectedHero.name,HeroManager.Instance.pSacrifice);
+        bDoneSkill = true;
     }
 
     void skill_LordOfTime() {
-
-
+        HeroEntity selectedHeroScript = selectedHero.GetComponent<HeroEntity>();
+        selectedHeroScript.m_pHero.addStatus(selectedHero.name, HeroManager.Instance.pBackToPos);
+        bDoneSkill = true;
     }
 
     void skill_MasterOfCircus() {
         if (aimedTargetList[0].GetComponent<HeroEntity>().nAlign == aimedTargetList[1].GetComponent<HeroEntity>().nAlign)
+        {
+            bDoneSkill = false;
+            return;
+        }
+        if (!aimedObjWithinRange(selectedHero, aimedTargetList[0], 0))
+        {
+            bDoneSkill = false;
+            return;
+        }
+        if (!aimedObjWithinRange(selectedHero, aimedTargetList[1], 0))
         {
             bDoneSkill = false;
             return;
@@ -418,13 +672,25 @@ public class HeroSkill : MonoBehaviour
         aimedTargetList[0].transform.position = aimedHero2Pos;
         aimedTargetList[1].transform.position = aimedHero1Pos;
 
+        aimedHero1MovingScript.destination = aimedHero2Pos;
+        aimedHero2MovingScript.destination = aimedHero1Pos;
+
         aimedHero1MovingScript.indexX = x2;
         aimedHero2MovingScript.indexX = x1;
         aimedHero1MovingScript.indexY = y2;
         aimedHero2MovingScript.indexY = y1;
 
+        aimedHero1MovingScript.destinationXIndex = x2;
+        aimedHero2MovingScript.destinationXIndex = x1;
+
+        aimedHero1MovingScript.destinationYIndex = y2;
+        aimedHero2MovingScript.destinationYIndex = y1;
+
         GameManager.Instance.setUnitInTile(aimedHero1Index, aimedTargetList[1]);
         GameManager.Instance.setUnitInTile(aimedHero2Index, aimedTargetList[0]);
+        
+        aimedTargetList[0].GetComponent<HeroEntity>().m_pHero.setPos(new Vector2Int(x2, y2));
+        aimedTargetList[1].GetComponent<HeroEntity>().m_pHero.setPos(new Vector2Int(x1, y1));
 
         bDoneSkill = true;
     }
@@ -440,10 +706,16 @@ public class HeroSkill : MonoBehaviour
         }
         Destroy(selectedKing);
         GameObject newKingdom = Instantiate(kingdomIconPrefab,pos,Quaternion.identity);
+        newKingdom.name = "kingdomIcon" + GameManager.Instance.getTurn().ToString();
+        GameObject pointAtKingdom = Instantiate(pointAtKingdomPrefab);
+        pointAtKingdom.transform.position = new Vector2(pos.x, pos.y + 1);
         newKingdom.GetComponent<Structure>().x = indexX;
         newKingdom.GetComponent<Structure>().y = indexY;
         mouseController.GetComponent<MouseController>().resetSelectedHeroObj();
         mouseController.GetComponent<MouseController>().kingdomIcon = newKingdom;
+
+        GameManager.Instance.currPlayer.setHasKingdom(true);
+        GameManager.Instance.currPlayer.setKingdomIndex(new Vector2Int(indexX,indexY));
         bDoneSkill = true;
     }
 
@@ -453,10 +725,15 @@ public class HeroSkill : MonoBehaviour
         Instance = this;
     }
 
-    void attack(GameObject myHero, GameObject enemyHero) {
+    public void attack(GameObject myHero, GameObject enemyHero) {
         HeroEntity.Heroes my_pHero = myHero.GetComponent<HeroEntity>().m_pHero;
         HeroEntity.Heroes enemy_pHero = enemyHero.GetComponent<HeroEntity>().m_pHero;
-
+/*
+        if (myHero.GetComponent<HeroEntity>().nAlign == enemyHero.GetComponent<HeroEntity>().nAlign)
+        {
+            return;
+        }
+*/
         int attackValue = my_pHero.getAttack();
         int defenseValue = enemy_pHero.getDefense();
 
@@ -472,6 +749,152 @@ public class HeroSkill : MonoBehaviour
             }
         }
         enemy_pHero.modifyHP(-attackValue);
+    }
+
+    bool aimedObjWithinRange(GameObject myHero,GameObject aimedObj, int aimObjType) {
+        int aimObjType_hero = 0;
+        int aimObjType_grid = 1;
+
+        bool withinRange = false;
+        int range = HeroManager.Instance.getHeroDataDic(myHero.GetComponent<HeroEntity>().nEntityType).m_nAttackDistance;
+        float fScale = 1.375f;
+        float fOffset = 0.08f;
+        int x1 = myHero.GetComponent<MovableUnit>().indexX;
+        int y1 = myHero.GetComponent<MovableUnit>().indexY;
+
+        int x2;
+        int y2;
+        Vector2 aimedHeroTilePos;
+        if (aimObjType == aimObjType_hero) {
+            x2 = aimedObj.GetComponent<MovableUnit>().indexX;
+            y2 = aimedObj.GetComponent<MovableUnit>().indexY;
+            aimedHeroTilePos = GameManager.Instance.getTileObjectByIndex("xIndex_" + x2.ToString() + "yIndex_" + y2.ToString()).transform.position;
+        }
+        else
+        {
+            aimedHeroTilePos = aimedObj.transform.position;
+        }
+        Vector2 myHeroTilePos = GameManager.Instance.getTileObjectByIndex("xIndex_"+x1.ToString()+"yIndex_"+y1.ToString()).transform.position;
+
+        Dictionary<string, GameObject> tileByIndexDic = GameManager.Instance.getTileObjByIndexDic();
+
+        float fDist = Vector2.Distance(myHeroTilePos,aimedHeroTilePos);
+        Vector2 dir = new Vector2(aimedHeroTilePos.x - myHeroTilePos.x,aimedHeroTilePos.y - myHeroTilePos.y).normalized;
+
+        if (fDist <= fScale * range + fOffset)
+        {
+            withinRange = true;
+            for (int i = 0; i < tileByIndexDic.Count; i++)
+            {
+                GameObject thisTile = tileByIndexDic.ElementAt(i).Value;
+                Vector2 tilePos = thisTile.transform.position;
+                Vector2 dir_ = new Vector2(tilePos.x-myHeroTilePos.x,tilePos.y-myHeroTilePos.y).normalized;
+                float fDist_ = Vector2.Distance(myHeroTilePos,tilePos);
+                if (dir_ == dir)
+                {
+                    float fOffset_ = 0.05f;
+                    if (fDist_ < fScale * range - fOffset_) {
+                        if (myHero.GetComponent<HeroEntity>().nEntityType != GlobalHeroIndex.eEntityType_ElfArcher) {
+                            if (thisTile.GetComponent<TileScript>().terrainType == GlobTileType.eTile_nObstacle
+                                || thisTile.GetComponent<TileScript>().terrainType == GlobTileType.eTile_nSea)
+                            {
+                                withinRange = false;
+                                Debug.Log("you can't aim the hero behind obstacle!");
+                            }
+                        }
+                    }
+                }
+            }
+
+        }
+
+        return withinRange;
+    }
+
+
+    public void aoeAttack(int range, GameObject myHero) {
+        int x = myHero.GetComponent<MovableUnit>().indexX;
+        int y = myHero.GetComponent<MovableUnit>().indexY;
+        Vector2 myHeroPos = myHero.transform.position;
+        Dictionary<Vector2Int, GameObject> unitByIndex = GameManager.Instance.getUnitInTileDic();
+        for (int i = 0; i < unitByIndex.Count; i++)
+        {
+            Vector2Int posIndex = unitByIndex.ElementAt(i).Key;
+            if (unitByIndex[posIndex] == null)
+            {
+                continue;
+            }
+            GameObject thisUnit = unitByIndex[posIndex];
+            if (thisUnit.name.Substring(0,6) != "player")
+            {
+                continue;
+            }
+            Vector2 aimedUnitPos = thisUnit.transform.position;
+            float fDist = Vector2.Distance(myHeroPos,aimedUnitPos);
+            int a = posIndex.x;
+            int b = posIndex.y;
+            if (range == 1)
+            {
+                if (thisUnit.GetComponent<HeroEntity>().nAlign == myHero.GetComponent<HeroEntity>().nAlign) {
+                    continue;
+                }
+
+                if (fDist <= 1.38f)
+                {
+                    if (aimedObjWithinRange(myHero,thisUnit,0)) {
+                        attack(myHero, thisUnit);
+                        if (myHero.GetComponent<HeroEntity>().nEntityType == GlobalHeroIndex.eEntityType_Flame) {
+                            HeroEntity.Heroes enemyHeroScript = thisUnit.GetComponent<HeroEntity>().m_pHero;
+                            enemyHeroScript.addStatus(selectedHero.name, HeroManager.Instance.pFlameDebuff);
+                        }
+                    }
+                }
+            }
+            else if (range == 2)
+            {
+                if (thisUnit.GetComponent<HeroEntity>().nAlign == myHero.GetComponent<HeroEntity>().nAlign)
+                {
+                    continue;
+                }
+
+                if (fDist <= 2.75f)
+                {
+                    if (aimedObjWithinRange(myHero, thisUnit, 0))
+                    {
+                        attack(myHero, thisUnit);
+                    }
+                }
+            }
+            else if(range == 3)
+            {
+                if (fDist <= 4.13f)
+                {
+                    if (aimedObjWithinRange(myHero, thisUnit, 0))
+                    {
+                        HeroEntity.Heroes my_pHero = myHero.GetComponent<HeroEntity>().m_pHero;
+                        HeroEntity.Heroes aimed_pHero = thisUnit.GetComponent<HeroEntity>().m_pHero;
+
+                        int attackValue = my_pHero.getCurrHP();
+                        int defenseValue = aimed_pHero.getDefense();
+
+                        if (defenseValue > 0)
+                        {
+                            if (attackValue > defenseValue)
+                            {
+                                attackValue -= defenseValue;
+                                aimed_pHero.setDefense(0);
+                            }
+                            else
+                            {
+                                attackValue = 0;
+                                aimed_pHero.modifyDefense(-attackValue);
+                            }
+                        }
+                        aimed_pHero.modifyHP(-attackValue);
+                    }
+                }
+            }
+        }
     }
 
 }

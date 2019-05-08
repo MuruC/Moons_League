@@ -129,3 +129,6 @@ MonoBehaviour:
   nType: 1
   bMoveWithMouse: 0
   placeableGrid: []
+  tavernTutorialPrefab: {fileID: 5635136820084733344, guid: ba1fa13abb3104244b3b43299e181605,
+    type: 3}
+  workshopTutorialPrefab: {fileID: 0}

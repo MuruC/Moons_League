@@ -44,10 +44,25 @@ public class Status
         strStatusName = pInfo.strStatusName;
 
         m_pStatusInfo = pInfo;
+
+        m_dicCacheData = new Dictionary<string, string>();
+
+        DoStart();
     }
     public void DoStart()
     {
         ChangeAttr(true);
+
+        if (m_pStatusInfo.strStatusName == "LordOfTimeSkill")
+        {
+            HeroEntity.Heroes pHero = HeroManager.Instance.getHeroByName(m_strDstPlayerName);
+            if (pHero != null)
+            {
+                // 记录下位置信息
+                SetCacheData("SrcPosX",pHero.getPosIndex().x);
+                SetCacheData("SrcPosY",pHero.getPosIndex().y);
+            }
+        }
     }
 
     public StatusInfo getStatusInfo() {
@@ -56,11 +71,90 @@ public class Status
 
     public void DoFinish()
     {
+        if (bRemoved)
+        {
+            return;
+        }
+        bRemoved = true;
+        /*
         for (int i = m_lstOverLapCount.Count - 1; i >= 0; --i)
         {
             m_lstOverLapCount.Remove(i);
             ChangeAttr(false);
         }
+        */
+        HeroEntity.Heroes pHero = HeroManager.Instance.getHeroByName(m_strDstPlayerName);
+        if (pHero == null)
+        {
+            return;
+        }
+        if (m_pStatusInfo.strStatusName == "deathSacrifice")
+        {
+            //献祭：加给对方的
+
+                HeroSkill.Instance.aoeAttack(3, GameObject.Find(m_strDstPlayerName));
+
+            pHero.setHP(0);
+
+        }
+        else if (m_pStatusInfo.strStatusName == "LordOfTimeSkill")
+        {
+            //回溯：加给自己的的
+      
+                //设置位置回去
+                GameObject dstHero = GameObject.Find(m_strDstPlayerName);
+                MovableUnit heroMovingScript = dstHero.GetComponent<MovableUnit>();
+                int x = int.Parse(GetCacheData("SrcPosX"));
+                int y = int.Parse(GetCacheData("SrcPosY"));
+
+            if (GameManager.Instance.bTileHasUnit(new Vector2Int(x,y)))
+            {
+                bool bFindEmptyPos = false;
+                for (int ox = -1; ox !=0 && ox< 1; ox++)
+                {
+                    for (int oy = -1; oy != 0 && oy<= 1; oy++)
+                    {
+                        int new_x = x + ox;
+                        int new_y = y + oy;
+
+                        int nType = GameManager.Instance.getTileObjectByIndex("xIndex_" + new_x.ToString() + "yIndex_" + new_y.ToString()).GetComponent<TileScript>().terrainType;
+                        if (!GameManager.Instance.bTileHasUnit(new Vector2Int(new_x,new_y)) && nType != GlobTileType.eTile_nObstacle && nType != GlobTileType.eTile_nSea)
+                        {
+                            bFindEmptyPos = true;
+                            x = new_x;
+                            y = new_y;
+                            break;
+                        }
+                    }
+
+                    if (bFindEmptyPos)
+                    {
+                        break;
+                    }
+                }
+            }
+
+                heroMovingScript.indexX = x;
+                heroMovingScript.indexY = y;
+                heroMovingScript.destinationXIndex = x;
+                heroMovingScript.destinationYIndex = y;
+                GameObject tile = GameManager.Instance.getTileObjectByIndex("xIndex_" + x.ToString() + "yIndex_" +y.ToString());
+                dstHero.transform.position = tile.transform.position;
+                heroMovingScript.destination = dstHero.transform.position;
+                HeroSkill.Instance.aoeAttack(2, GameObject.Find(m_strDstPlayerName));
+            
+        }
+
+        for (int i = m_lstOverLapCount.Count - 1; i >= 0; --i)
+        {
+            m_lstOverLapCount.Remove(i);
+            ChangeAttr(false);
+        }
+
+
+       
+            pHero.removeStatusByName(m_pStatusInfo.strStatusName);
+        
     }
 
     public bool getIsDebuff() {
@@ -79,12 +173,12 @@ public class Status
             return;
         }
 
-        if (strStatusName == "GiveEnemyPoisonDamage") {
+        if (strStatusName == "giveEnemyPoisonDamage") {
             if (m_dicChangedAttr.ContainsKey("hp")) {
                 string[] arrValues = m_dicChangedAttr["hp"].Split('|');
                 //变化的百分比和固定值
                 int nPercent = int.Parse(arrValues[0]);
-                int nValue = int.Parse(arrValues[1]);
+                int nValue = int.Parse(arrValues[1])*m_nCurOverLapCount;
 
                 pHero.modifyHP(nValue);
             }
@@ -112,7 +206,7 @@ public class Status
             int nRemainTurn = nCurrentTurn - nEndTurn;
             if (nRemainTurn >= 0)
             {
-                m_lstOverLapCount.Remove(i);
+                m_lstOverLapCount.RemoveAt(i);
                 ChangeAttr(false);
             }
             else {
@@ -203,7 +297,7 @@ public class Status
             }
             else if (kvp.Key == "hp")
             {
-               // pHero.modifyHP(nValue);
+                // pHero.modifyHP(nValue);
             }
             else if (kvp.Key == "slience")
             {
@@ -257,6 +351,12 @@ public class Status
                 {
                     pHero.setStunned(false);
                 }
+            } else if (kvp.Key == "backToPos") {
+                //Debug.Log("backToPos!");
+            }
+            else if (kvp.Key == "deathSacrifice")
+            {
+
             }
         }
     }
@@ -269,6 +369,30 @@ public class Status
         m_fAttrScale = fAttrScale;
         // 重新添加上去
         ChangeAttr(true);
+    }
+
+    public void SetCacheData(string strKey, string strValue) {
+        m_dicCacheData[strKey] = strValue;
+    }
+
+    public void SetCacheData(string strKey, int strValue) {
+        m_dicCacheData[strKey] = strValue.ToString();
+    }
+
+    public void SetCacheData(string strKey, float strValue)
+    {
+        m_dicCacheData[strKey] = strValue.ToString();
+    }
+    public void SetCacheData(string strKey, double strValue)
+    {
+        m_dicCacheData[strKey] = strValue.ToString();
+    }
+    public string GetCacheData(string strKey) {
+        if (!m_dicCacheData.ContainsKey(strKey))
+        {
+            return "0";
+        }
+        return m_dicCacheData[strKey];
     }
 
     private string m_strSrcPlayerName;  // Status来源方
@@ -288,6 +412,10 @@ public class Status
 
     private string strStatusName; //属性name
     private StatusInfo m_pStatusInfo;
+
+    private bool bRemoved = false;
+
+    private Dictionary<string, string> m_dicCacheData; //
 }
 
 
@@ -309,6 +437,7 @@ public class HeroEntity : MonoBehaviour
         private bool bStun;
         private bool bSilence;
         private int vulnerability;
+        private Vector2Int posIndex;
         public Heroes(int nType, int nAlign) {
             nEntityType = nType;
             nAlignType = nAlign;
@@ -341,6 +470,15 @@ public class HeroEntity : MonoBehaviour
             currentHP += value;
             currentHP = Mathf.Clamp(currentHP, 0, maxHP);
         }
+
+        public void setPos(Vector2Int pos) {
+            posIndex = pos;
+        }
+
+        public Vector2Int getPosIndex() {
+            return posIndex;
+        }
+
         public int getAttack() {
             return currentAttack;
         }
@@ -546,16 +684,34 @@ public class HeroEntity : MonoBehaviour
         if (m_pHero.getCurrHP() <= 0)
         {
             HeroManager.Instance.removeHero(nAlign, gameObject);
-
+            if (nAlign == 0)
+            {
+                GameManager.Instance.m_player1.removeHero(gameObject);
+                GameManager.Instance.m_player1.modifyCurrentHeroNum(-1);
+            }
+            else {
+                GameManager.Instance.m_player2.removeHero(gameObject);
+                GameManager.Instance.m_player2.modifyCurrentHeroNum(-1);
+            }
+            Vector2Int pos = new Vector2Int(gameObject.GetComponent<MovableUnit>().indexX,gameObject.GetComponent<MovableUnit>().indexY);
+            GameManager.Instance.modifyTileHasUnit(pos);
+            GameManager.Instance.modifyUnitInTile(pos);
+            HeroManager.Instance.addHeroCountInStock(nEntityType,1);
             Destroy(gameObject);
         }
-
+        /*
         foreach(KeyValuePair<string, Status> kvp in m_pHero.getStatusList())
         {
             kvp.Value.Update(GameManager.Instance.getCurrentTurn());
         }
-
-
+        */
+        Dictionary<string, Status> pStatusList = m_pHero.getStatusList();
+        List<string> lstStatusNames = new List<string>(pStatusList.Keys);
+        for (int i = lstStatusNames.Count - 1; i >= 0; --i)
+        {
+            string strKey = lstStatusNames[i];
+            pStatusList[strKey].Update(GameManager.Instance.getCurrentTurn());
+        }
 
         heroUnitAnimator.SetInteger("heroAlliance", nAlign);
     }
@@ -576,16 +732,33 @@ public class HeroEntity : MonoBehaviour
             goblinMineList.Add(goblinMine);
         }
         else {
-            GameObject goblinMine2 = goblinMineList[1];
+            bool hasTwoMine = true;
+            if (goblinMineList[0] == null)
+            {
+                goblinMineList[0] = goblinMine;
+                hasTwoMine = false;
+            }
+            else if (goblinMineList[1] == null)
+            {
+                goblinMineList[1] = goblinMine;
+                hasTwoMine = false;
+            }
 
-            Destroy(goblinMineList[0]);
-            goblinMineList[0] = goblinMine2;
-            goblinMineList[1] = goblinMine;
+            if (hasTwoMine)
+            {
+                GameObject goblinMine2 = goblinMineList[1];
 
+                goblinMineList[0].GetComponent<GoblinMine>().destroyThisObject();
+                goblinMineList[0] = goblinMine2;
+                goblinMineList[1] = goblinMine;
+            }
+            
         }
     }
 
     public void resetHeroInfoEveryTurn() {
         m_pHero.setCurrentMoveStep(m_pHero.getMaxMoveStep());
     }
+
+  
 }
