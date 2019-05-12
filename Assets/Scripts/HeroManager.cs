@@ -104,13 +104,19 @@ public class HeroManager : MonoBehaviour
         {
             return;
         }
+        //Get the path of the Game data folder
+        string m_Path = Application.dataPath;
+
+        //Output the Game data path to the console
+        Debug.Log("Path : " + m_Path);
+
         resetHeroEntity();
 
         m_lstRandomHeroIndex = new List<int>();
 
         // 读取数据
         //CsvReader pReader = new CsvReader(@"W:\Github\gameDev_final\HeroData.csv");
-        CsvReader pReader = new CsvReader(@"HeroData.csv");
+        CsvReader pReader = new CsvReader(m_Path + "/StreamingAssets/HeroData.csv");
         while (!pReader.IsEnd())
         {
             HeroData pData = new HeroData();
@@ -158,6 +164,7 @@ public class HeroManager : MonoBehaviour
         InitFlameDebuff();
         InitPoisonDebuff();
         InitSlienceDebuff();
+        InitStunnedDebuff();
         InitPurifierBuff();
         InitVulnerabilityByMonk();
         InitVulnerabilityByBerserker();
@@ -172,7 +179,7 @@ public class HeroManager : MonoBehaviour
     void InitDamageBuff() {
         pDamageBuff = new StatusInfo();
         pDamageBuff.strStatusName = "ezhu_paoxiao";
-        pDamageBuff.nTotalTurn = 1;
+        pDamageBuff.nTotalTurn = 2;
         pDamageBuff.nMaxOverLapCount = 999;
         pDamageBuff.bDebuff = false;
         pDamageBuff.dicChangedAttr = new Dictionary<string, string>();
@@ -182,7 +189,7 @@ public class HeroManager : MonoBehaviour
     void InitWeaknessDebuff() {
         pWeaknessDebuff = new StatusInfo();
         pWeaknessDebuff.strStatusName = "ezhu_isHungry";
-        pWeaknessDebuff.nTotalTurn = 1;
+        pWeaknessDebuff.nTotalTurn = 2;
         pWeaknessDebuff.nMaxOverLapCount = 999;
         pWeaknessDebuff.bDebuff = true;
         pWeaknessDebuff.dicChangedAttr = new Dictionary<string, string>();
@@ -212,7 +219,7 @@ public class HeroManager : MonoBehaviour
     void InitSlienceDebuff() {
         pSilenceDebuff = new StatusInfo();
         pSilenceDebuff.strStatusName = "enemyCantDoSkill";
-        pSilenceDebuff.nTotalTurn = 1;
+        pSilenceDebuff.nTotalTurn = 2;
         pSilenceDebuff.nMaxOverLapCount = 1;
         pSilenceDebuff.bDebuff = true;
         pSilenceDebuff.dicChangedAttr = new Dictionary<string, string>();
@@ -232,7 +239,7 @@ public class HeroManager : MonoBehaviour
     void InitVulnerabilityByMonk() {
         pVulnerabilityByMonk = new StatusInfo();
         pVulnerabilityByMonk.strStatusName = "MonkGiveVulnerability";
-        pVulnerabilityByMonk.nTotalTurn = 1;
+        pVulnerabilityByMonk.nTotalTurn = 2;
         pVulnerabilityByMonk.nMaxOverLapCount = 999;
         pVulnerabilityByMonk.bDebuff = true;
         pVulnerabilityByMonk.dicChangedAttr = new Dictionary<string, string>();
@@ -242,7 +249,7 @@ public class HeroManager : MonoBehaviour
     void InitVulnerabilityByBerserker() {
         pVulnerabilityByBerserker = new StatusInfo();
         pVulnerabilityByBerserker.strStatusName = "BerserkerGiveVulnerability";
-        pVulnerabilityByBerserker.nTotalTurn = 1;
+        pVulnerabilityByBerserker.nTotalTurn = 2;
         pVulnerabilityByBerserker.nMaxOverLapCount = 999;
         pVulnerabilityByBerserker.bDebuff = true;
         pVulnerabilityByBerserker.dicChangedAttr = new Dictionary<string, string>();
@@ -252,7 +259,7 @@ public class HeroManager : MonoBehaviour
     void InitShieldBuff() {
         pShield = new StatusInfo();
         pShield.strStatusName = "landGuardianGiveTeammateBuff";
-        pShield.nTotalTurn = 1;
+        pShield.nTotalTurn = 2;
         pShield.nMaxOverLapCount = 999;
         pShield.bDebuff = false;
         pShield.dicChangedAttr = new Dictionary<string, string>();
@@ -262,7 +269,7 @@ public class HeroManager : MonoBehaviour
     void InitDoubleDebuff() {
         pDoubleDebuff = new StatusInfo();
         pDoubleDebuff.strStatusName = "DoubleDebuff";
-        pDoubleDebuff.nTotalTurn = 1;
+        pDoubleDebuff.nTotalTurn = 2;
         pDoubleDebuff.nMaxOverLapCount = 999;
         pDoubleDebuff.bDebuff = true;
         pDoubleDebuff.dicChangedAttr = new Dictionary<string, string>();
@@ -272,7 +279,7 @@ public class HeroManager : MonoBehaviour
     void InitDoubleDamageBuff() {
         pDoubleDamageBuff = new StatusInfo();
         pDoubleDamageBuff.strStatusName = "DoubleDamageBuff";
-        pDoubleDamageBuff.nTotalTurn = 1;
+        pDoubleDamageBuff.nTotalTurn = 2;
         pDoubleDamageBuff.nMaxOverLapCount = 999;
         pDoubleDamageBuff.bDebuff = false;
         pDoubleDamageBuff.dicChangedAttr = new Dictionary<string, string>();
@@ -282,7 +289,7 @@ public class HeroManager : MonoBehaviour
     void InitDoubleAllBuff() {
         pDoubleAllBuff = new StatusInfo();
         pDoubleAllBuff.strStatusName = "DoubleAllBuff";
-        pDoubleAllBuff.nTotalTurn = 1;
+        pDoubleAllBuff.nTotalTurn = 2;
         pDoubleAllBuff.nMaxOverLapCount = 999;
         pDoubleAllBuff.bDebuff = false;
         pDoubleAllBuff.dicChangedAttr = new Dictionary<string, string>();
@@ -292,7 +299,7 @@ public class HeroManager : MonoBehaviour
     void InitStunnedDebuff() {
         pStunnedDebuff = new StatusInfo();
         pStunnedDebuff.strStatusName = "stunnedDebuff";
-        pStunnedDebuff.nTotalTurn = 1;
+        pStunnedDebuff.nTotalTurn = 2;
         pStunnedDebuff.nMaxOverLapCount = 999;
         pStunnedDebuff.bDebuff = true;
         pStunnedDebuff.dicChangedAttr = new Dictionary<string, string>();
@@ -302,7 +309,7 @@ public class HeroManager : MonoBehaviour
     void InitBackToPos() {
         pBackToPos = new StatusInfo();
         pBackToPos.strStatusName = "LordOfTimeSkill";
-        pBackToPos.nTotalTurn = 3;
+        pBackToPos.nTotalTurn = 6;
         pBackToPos.nMaxOverLapCount = 1;
         pBackToPos.bDebuff = false;
         pBackToPos.dicChangedAttr = new Dictionary<string, string>();
@@ -312,7 +319,7 @@ public class HeroManager : MonoBehaviour
     void InitSacrifice() {
         pSacrifice = new StatusInfo();
         pSacrifice.strStatusName = "deathSacrifice";
-        pSacrifice.nTotalTurn = 3;
+        pSacrifice.nTotalTurn = 6;
         pSacrifice.nMaxOverLapCount = 1;
         pSacrifice.bDebuff = false;
         pSacrifice.dicChangedAttr = new Dictionary<string, string>();
@@ -400,8 +407,8 @@ public class HeroManager : MonoBehaviour
             {
                 return;
             }
-            //int heroIndex = (int)Random.Range(0,21);
-            //int heroIndex = GlobalHeroIndex.eEntityType_DeathAlchemist;
+            //int heroIndex = (int)Random.Range(5,12);
+            //int heroIndex = GlobalHeroIndex.eEntityType_LordOfTime;
             int nIndex = (int)Random.Range(0, lstRandomHero.Count);
             int heroIndex = lstRandomHero[nIndex];
             lstRandomHero.Remove(nIndex);
@@ -410,6 +417,8 @@ public class HeroManager : MonoBehaviour
             UIManager.Instance.heroCardList[i].GetComponent<HeroCard>().nType = heroIndex;
             UIManager.Instance.setHeroName(i,newRandomHeroData.m_strName);
             UIManager.Instance.setHeroSkillDescriptionInTavern(i,newRandomHeroData.m_strSkillDescription);
+            UIManager.Instance.setHeroMoney(i,newRandomHeroData.m_nMoneyTobuy);
+            UIManager.Instance.setHeroCardSprite(i,heroIndex);
         }
     }
 

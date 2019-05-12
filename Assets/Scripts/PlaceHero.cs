@@ -94,6 +94,7 @@ public class PlaceHero : MonoBehaviour
         GameManager.Instance.setUnitInTile(posIndex,tile);
 
         resetPlaceHeroState();
+        GameManager.Instance.removeFogOfWar(x, y, GameManager.Instance.getTurn());
     }
 
     void resetPlaceHeroState() {

@@ -42,9 +42,13 @@ public class TutorialScript : MonoBehaviour
             if (pressKing1Num >= 1)
             {
                 actionTutorial.SetActive(true);
-                GameObject pointAtKing1Prefab = GameObject.Find("pointAtKingPrefab" + GameManager.Instance.getTurn().ToString());
-                float aliveTime = 2.0f;
-                Destroy(pointAtKing1Prefab,aliveTime);
+                if (GameObject.Find("pointAtKingPrefab" + GameManager.Instance.getTurn().ToString()) != null)
+                {
+                    GameObject pointAtKing1Prefab = GameObject.Find("pointAtKingPrefab" + GameManager.Instance.getTurn().ToString());
+                    float aliveTime = 2.0f;
+                    Destroy(pointAtKing1Prefab, aliveTime);
+                }
+
             }
 
             if (GameManager.Instance.currPlayer.getBHasKingdom())
@@ -64,14 +68,18 @@ public class TutorialScript : MonoBehaviour
             if (pressKing2Num >= 1)
             {
                 actionTutorial.SetActive(true);
-                GameObject pointAtKing2Prefab = GameObject.Find("pointAtKingPrefab" + GameManager.Instance.getTurn().ToString());
-                float aliveTime = 2.0f;
-                Destroy(pointAtKing2Prefab, aliveTime);
+
+                if (GameObject.Find("pointAtKingPrefab" + GameManager.Instance.getTurn().ToString()) != null)
+                {
+                    GameObject pointAtKing2Prefab = GameObject.Find("pointAtKingPrefab" + GameManager.Instance.getTurn().ToString());
+                    float aliveTime = 2.0f;
+                    Destroy(pointAtKing2Prefab, aliveTime);
+                }
+
             }
             if (GameManager.Instance.currPlayer.getBHasKingdom())
             {
                 actionTutorial.SetActive(false);
-                GameObject pointAtKingdom = Instantiate(pointAtKingdomPrefab);
              
             }
         }

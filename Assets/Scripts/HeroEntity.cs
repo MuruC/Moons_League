@@ -141,8 +141,10 @@ public class Status
                 GameObject tile = GameManager.Instance.getTileObjectByIndex("xIndex_" + x.ToString() + "yIndex_" +y.ToString());
                 dstHero.transform.position = tile.transform.position;
                 heroMovingScript.destination = dstHero.transform.position;
-                HeroSkill.Instance.aoeAttack(2, GameObject.Find(m_strDstPlayerName));
-            
+            HeroSkill.Instance.spawnClock(tile.transform.position);
+            //GameObject.Find("Main Camera").GetComponent<CameraShake>().shake(0.2f,0.3f);
+            HeroSkill.Instance.aoeAttack(2, GameObject.Find(m_strDstPlayerName));
+            SoundEffectManager.Instance.playAudio(9);
         }
 
         for (int i = m_lstOverLapCount.Count - 1; i >= 0; --i)
@@ -666,12 +668,21 @@ public class HeroEntity : MonoBehaviour
     Animator heroUnitAnimator;
     public int actionMode = 0;
     private List<GameObject> goblinMineList;
+    float deathTime = 0;
+    bool setDeathTime = false;
+    Renderer rend;
     // Start is called before the first frame update
     void Start()
     {
         GetComponent<SpriteRenderer>().sprite = UIManager.Instance.heroIconOnMapSrpites[nEntityType];
         heroUnitAnimator = GetComponent<Animator>();
         goblinMineList = new List<GameObject>();
+        if (nAlign == 1 && nEntityType == GlobalHeroIndex.eEntityType_King)
+        {
+            GetComponent<SpriteRenderer>().sprite = UIManager.Instance.heroIconOnMapSrpites[23];
+        }
+        rend = GetComponent<Renderer>();
+       
     }
 
     // Update is called once per frame
@@ -681,23 +692,29 @@ public class HeroEntity : MonoBehaviour
         {
             return;
         }
-        if (m_pHero.getCurrHP() <= 0)
+        if (m_pHero.getCurrHP() <= 0 && setDeathTime == false)
         {
-            HeroManager.Instance.removeHero(nAlign, gameObject);
-            if (nAlign == 0)
+            setDeathTime = true;
+            deathTime = Time.time;
+            for (int i = 0; i < 3; i++)
             {
-                GameManager.Instance.m_player1.removeHero(gameObject);
-                GameManager.Instance.m_player1.modifyCurrentHeroNum(-1);
+                gameObject.transform.GetChild(i).GetComponent<awakeDissolve>().setDissolveTime();
             }
-            else {
-                GameManager.Instance.m_player2.removeHero(gameObject);
-                GameManager.Instance.m_player2.modifyCurrentHeroNum(-1);
+            SoundEffectManager.Instance.playAudio(7);
+        }
+
+        
+        if (setDeathTime)
+        {
+            rend.material.shader = Shader.Find("Custom/2D/Dissolve");
+            float threshold = Time.time - deathTime;
+            rend.material.SetFloat("_Threshold", threshold);
+
+            if (threshold > 1)
+            {
+                destroyThisCharacter();
             }
-            Vector2Int pos = new Vector2Int(gameObject.GetComponent<MovableUnit>().indexX,gameObject.GetComponent<MovableUnit>().indexY);
-            GameManager.Instance.modifyTileHasUnit(pos);
-            GameManager.Instance.modifyUnitInTile(pos);
-            HeroManager.Instance.addHeroCountInStock(nEntityType,1);
-            Destroy(gameObject);
+
         }
         /*
         foreach(KeyValuePair<string, Status> kvp in m_pHero.getStatusList())
@@ -711,6 +728,24 @@ public class HeroEntity : MonoBehaviour
         {
             string strKey = lstStatusNames[i];
             pStatusList[strKey].Update(GameManager.Instance.getCurrentTurn());
+        }
+
+        if (m_pHero.getStunnedStatus())
+        {
+            gameObject.transform.GetChild(1).GetComponent<SpriteRenderer>().sprite = UIManager.Instance.stunnedMask;
+        }
+        else
+        {
+            gameObject.transform.GetChild(1).GetComponent<SpriteRenderer>().sprite = null;
+        }
+
+        if (m_pHero.getSilenceStatus())
+        {
+            gameObject.transform.GetChild(2).GetComponent<SpriteRenderer>().sprite = UIManager.Instance.silenceMask;
+        }
+        else
+        {
+            gameObject.transform.GetChild(2).GetComponent<SpriteRenderer>().sprite = null;
         }
 
         heroUnitAnimator.SetInteger("heroAlliance", nAlign);
@@ -758,7 +793,27 @@ public class HeroEntity : MonoBehaviour
 
     public void resetHeroInfoEveryTurn() {
         m_pHero.setCurrentMoveStep(m_pHero.getMaxMoveStep());
+        setAnime(false);
     }
 
-  
+    void destroyThisCharacter() {
+        HeroManager.Instance.removeHero(nAlign, gameObject);
+        if (nAlign == 0)
+        {
+            GameManager.Instance.m_player1.removeHero(gameObject);
+            GameManager.Instance.m_player1.modifyCurrentHeroNum(-1);
+            GameManager.Instance.m_player2.modifyMoney(HeroManager.Instance.getHeroDataDic(nEntityType).m_nGetMoneyByKillingThisHero);
+        }
+        else
+        {
+            GameManager.Instance.m_player2.removeHero(gameObject);
+            GameManager.Instance.m_player2.modifyCurrentHeroNum(-1);
+            GameManager.Instance.m_player1.modifyMoney(HeroManager.Instance.getHeroDataDic(nEntityType).m_nGetMoneyByKillingThisHero);
+        }
+        Vector2Int pos = new Vector2Int(gameObject.GetComponent<MovableUnit>().indexX, gameObject.GetComponent<MovableUnit>().indexY);
+        GameManager.Instance.modifyTileHasUnit(pos);
+        GameManager.Instance.modifyUnitInTile(pos);
+        HeroManager.Instance.addHeroCountInStock(nEntityType, 1);
+        Destroy(gameObject);
+    }
 }

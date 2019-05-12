@@ -71,7 +71,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Sprite: {fileID: 21300000, guid: 4d5627b60445f1241997fc9c31d24dfe, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 7897700c07671024f9d26a1157921444, type: 3}
   m_Color: {r: 0.033018887, g: 1, b: 0.5542974, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -129,3 +129,5 @@ MonoBehaviour:
   nType: 3
   bMoveWithMouse: 0
   placeableGrid: []
+  tavernTutorialPrefab: {fileID: 0}
+  workshopTutorialPrefab: {fileID: 0}

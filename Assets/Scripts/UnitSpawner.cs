@@ -46,6 +46,7 @@ public class UnitSpawner : MonoBehaviour
         GameManager.Instance.m_player1.setOriginalIndex(new Vector2Int(x,y));
         setCamera(x,y);
         GameObject.Find("TutorialController").GetComponent<TutorialScript>().spawnPointAtKing(pKingUnit1.transform.position.x,pKingUnit1.transform.position.y);
+        GameManager.Instance.removeFogOfWar(x,y,0);
     }
     bool checkIfTileIsOnLand(int x, int y) {
         string tileName = "xIndex_" + x.ToString() + "yIndex_" + y.ToString();
@@ -76,6 +77,9 @@ public class UnitSpawner : MonoBehaviour
         string tileName = "xIndex_" + pKingUnit2.GetComponent<MovableUnit>().indexX.ToString() + "yIndex_" + pKingUnit2.GetComponent<MovableUnit>().indexY.ToString();
         pKingUnit2.transform.position = GameManager.Instance.getTileObjectByIndex(tileName).transform.position;
         GameManager.Instance.m_player2.setOriginalIndex(new Vector2Int(x,y));
+        GameManager.Instance.removeFogOfWar(x, y, 1);
+        GameManager.Instance.m_player2.setFogOfWarActive(false);
+
     }
 
     public void spawnHero(int nType) {
@@ -149,4 +153,7 @@ public class UnitSpawner : MonoBehaviour
             thisHeroPlacingScript.showPlaceableGrid(a, b - 1);
         }
     }
+
+
+    
 }

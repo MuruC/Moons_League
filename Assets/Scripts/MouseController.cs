@@ -31,7 +31,6 @@ public class MouseController : MonoBehaviour
         currPlayer = GameManager.Instance.currPlayer;
         clickMouseLeftButton();
         clickMouseRightButton();
-
     }
 
     private bool isMouseOverUI() {
@@ -136,7 +135,7 @@ public class MouseController : MonoBehaviour
                     GameObject.Find("TutorialController").GetComponent<TutorialScript>().modifyPressKing2(1);
                 }
             }
-            if (thisHeroScript.m_pHero.getCurrentMoveStep() > 0)
+            if (thisHeroScript.m_pHero.getCurrentMoveStep() > 0 && !thisHeroScript.m_pHero.getStunnedStatus())
             {
                 walkableTileIndex();
             }
@@ -187,6 +186,7 @@ public class MouseController : MonoBehaviour
                     {
                         GameManager.Instance.currPlayer.setOriginalIndex(new Vector2Int(thisTileScript.x,thisTileScript.y));
                     }
+                    GameManager.Instance.removeFogOfWar(thisTileScript.x, thisTileScript.y,thisHeroScript.nAlign);
                 }
             }
         }
@@ -235,12 +235,17 @@ public class MouseController : MonoBehaviour
                 clickActionButton(raycastResultList[i]);
             }
         }
+        SoundEffectManager.Instance.playAudio(2);
     }
 
 
 
     public void clickActionButton(RaycastResult thisRaycastResult) {
         if (thisHeroScript == null) {
+            return;
+        }
+        if (thisHeroScript.m_pHero.getSilenceStatus() || thisHeroScript.m_pHero.getStunnedStatus())
+        {
             return;
         }
         HeroSkill.Instance.doAction();
@@ -271,7 +276,10 @@ public class MouseController : MonoBehaviour
         {
             return;
         }
-
+        if (currPlayer.getMoney() < 10)
+        {
+            return;
+        }
         UnitSpawner.GetComponent<UnitSpawner>().spawnHero(GlobalHeroIndex.eEntityType_Miner);
     }
 
@@ -282,6 +290,11 @@ public class MouseController : MonoBehaviour
 
     void pickStructure(RaycastResult thisRaycastResult) {
         if (currPlayer.getMaxStructureNum() <= currPlayer.getCurrStructureNum()) {
+            return;
+        }
+
+        if (currPlayer.getMoney() <= 0)
+        {
             return;
         }
         GameObject thisBuildingCard = thisRaycastResult.gameObject;

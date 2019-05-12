@@ -14,6 +14,9 @@ public class MovableUnit : MonoBehaviour
     HeroEntity.Heroes m_pHero;
     public int indexX;
     public int indexY;
+    public GameObject goldCoinEffect;
+    public GameObject removeDebuffEffect;
+    public GameObject noGoldPrefab;
     // Start is called before the first frame update
     void Start()
     {
@@ -61,12 +64,18 @@ public class MovableUnit : MonoBehaviour
             if (GameManager.Instance.getTileObjectByIndex("xIndex_"+ indexX.ToString() + "yIndex_"+indexY.ToString()).GetComponent<TileScript>().terrainType == GlobTileType.eTile_nGoldMine)
             {
                 GameManager.Instance.currPlayer.modifyMoney(20);
+                Instantiate(goldCoinEffect,transform.position,Quaternion.identity);
+                Instantiate(noGoldPrefab,GameManager.Instance.getTileObjectByIndex("xIndex_" + indexX.ToString() + "yIndex_" + indexY.ToString()).transform.position,Quaternion.identity);
+                GameManager.Instance.getTileObjectByIndex("xIndex_" + indexX.ToString() + "yIndex_" + indexY.ToString()).GetComponent<TileScript>().terrainType = GlobTileType.eTile_nWalkable;
+                SoundEffectManager.Instance.playAudio(1);
             }
         }
 
         if (GameManager.Instance.getTileObjectByIndex("xIndex_" + indexX.ToString() + "yIndex_" + indexY.ToString()).GetComponent<TileScript>().terrainType == GlobTileType.eTile_nLake)
         {
             gameObject.GetComponent<HeroEntity>().m_pHero.eliminateAllDebuffByName();
+            Instantiate(removeDebuffEffect,transform.position,Quaternion.identity);
+            SoundEffectManager.Instance.playAudio(6);
         }
     }
 

@@ -11,6 +11,7 @@ public class GoblinMine : MonoBehaviour
     public GameObject warningTilePreb;
     private List<GameObject> warningTileLst;
     private bool hasSpawnWarningTile = false;
+    public GameObject explorationPrefab;
     // Start is called before the first frame update
 
     // Update is called once per frame
@@ -69,6 +70,7 @@ public class GoblinMine : MonoBehaviour
                 }
             }
             enemy_pHero.modifyHP(-attack);
+            Instantiate(explorationPrefab,transform.position,Quaternion.identity);
             destroyThisObject();
         }
     }
@@ -123,6 +125,7 @@ public class GoblinMine : MonoBehaviour
             {
                 warningTileLst[i].SetActive(false);
             }
+            gameObject.GetComponent<SpriteRenderer>().sprite = UIManager.Instance.mineTrap;
         }
         else
         {
@@ -130,6 +133,7 @@ public class GoblinMine : MonoBehaviour
             {
                 warningTileLst[i].SetActive(true);
             }
+            gameObject.GetComponent<SpriteRenderer>().sprite = null;
         }
     }
 }

@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
+using System.Linq;
 public class PlayerAlly : MonoBehaviour
 {
     static int player1Index = 0;
@@ -21,6 +21,7 @@ public class PlayerAlly : MonoBehaviour
         private Vector2Int originalIndex;
         private Vector2Int kingdomIndex;
         private bool bHasKindom;
+        private Dictionary<Vector2Int, GameObject> fogOfWar = new Dictionary<Vector2Int, GameObject>();
         public Players(int nIndex) {
             playerIndex = nIndex;
             bHasKindom = false;
@@ -129,6 +130,29 @@ public class PlayerAlly : MonoBehaviour
         public bool getBHasKingdom() {
             return bHasKindom;
         }
+
+        public void setFogOfWar(int x, int y, GameObject blackTile) {
+            Vector2Int index = new Vector2Int(x,y);
+            fogOfWar[index] = blackTile;
+        }
+
+        public void removeFogOfWar(int x, int y) {
+            Vector2Int index = new Vector2Int(x, y);
+            if (!fogOfWar.ContainsKey(index))
+            {
+                return;
+            }
+            Destroy(fogOfWar[index]);
+            fogOfWar.Remove(index);
+        }
+
+        public void setFogOfWarActive(bool value) {
+            for (int i = 0; i < fogOfWar.Count; i++)
+            {
+                fogOfWar.ElementAt(i).Value.SetActive(value);
+            }
+        }
+
     }
 
     public PlayerAlly.Players m_player1;

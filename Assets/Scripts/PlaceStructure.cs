@@ -81,7 +81,7 @@ public class PlaceStructure : MonoBehaviour
             placeableGrid[i].GetComponent<TileScript>().setColorAnime(GlobTileColorAnimeIndex.eTileColor_null);
         }
         placeableGrid.Clear();
-
+        GameManager.Instance.removeFogOfWar(thisStructureScipt.x, thisStructureScipt.y, GameManager.Instance.getTurn());
         if (thisStructureScipt.nType == GlobStructureType.eStructure_nTavern) {
             GameManager.Instance.currPlayer.setTavernIndex(new Vector2Int(gameObject.GetComponent<Structure>().x, gameObject.GetComponent<Structure>().y));
             GameObject tavernTutorial = Instantiate(tavernTutorialPrefab);
@@ -100,5 +100,6 @@ public class PlaceStructure : MonoBehaviour
                 GameObject.Find("TutorialController").GetComponent<TutorialScript>().king2_buildWorkshop = true;
             }
         }
+        SoundEffectManager.Instance.playAudio(4);
     }
 }

@@ -15,7 +15,7 @@ public class TemporaryTile : MonoBehaviour
     void Update()
     {
         int currentTurnNum = GameManager.Instance.getCurrentTurn();
-        if (currentTurnNum - initTurnNum < 3) {
+        if (currentTurnNum - initTurnNum < 6) {
             return;
         }
         else {

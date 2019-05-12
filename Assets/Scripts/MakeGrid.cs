@@ -14,6 +14,8 @@ public class MakeGrid : MonoBehaviour
         }
         float xOffset = GameManager.Instance.xOffset;
         float yOffset = GameManager.Instance.yOffset;
+        PlayerAlly.Players m_player1 = GameManager.Instance.m_player1;
+        PlayerAlly.Players m_player2 = GameManager.Instance.m_player2;
         for (int x = 0; x < GameManager.Instance.width; x++)
         {
             for (int y = 0; y < GameManager.Instance.height; y++)
@@ -35,7 +37,20 @@ public class MakeGrid : MonoBehaviour
                 GameManager.Instance.setTerrainPos(newTile,arrayXPos - GameManager.Instance.xBeginPos,arrayYpos-GameManager.Instance.yBeginPos);
                 GameManager.Instance.setTileObjectByIndex("xIndex_" + x.ToString() + "yIndex_" + y.ToString(), newTile);
 
-                
+                GameObject newFogTile1 = Instantiate(fogTilePrefab);
+                newFogTile1.transform.position = newTile.transform.position;
+                newFogTile1.GetComponent<TileScript>().x = x;
+                newFogTile1.GetComponent<TileScript>().y = y;
+                newFogTile1.GetComponent<TileScript>().terrainType = -1;
+
+                GameObject newFogTile2 = Instantiate(fogTilePrefab);
+                newFogTile2.transform.position = newTile.transform.position;
+                newFogTile2.GetComponent<TileScript>().x = x;
+                newFogTile2.GetComponent<TileScript>().y = y;
+                newFogTile2.GetComponent<TileScript>().terrainType = -1;
+
+                m_player1.setFogOfWar(x,y,newFogTile1);
+                m_player2.setFogOfWar(x, y, newFogTile2);
             }
         }
         setTerrainTypeIndex();

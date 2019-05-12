@@ -142,6 +142,8 @@ MonoBehaviour:
   y: 0
   terrainType: 0
   myColorAnime: 0
+  tileExplanationPrefab: {fileID: 3316610588622940508, guid: 51533e3d11b0faf498d2b5a82c6f85e0,
+    type: 3}
 --- !u!212 &2851096136131561938
 SpriteRenderer:
   m_ObjectHideFlags: 0

@@ -21,6 +21,18 @@ public class HeroSkill : MonoBehaviour
     public GameObject arrowPrefab;
     public GameObject pointAtKingdomPrefab;
 
+
+    //public GameObject cameraObj;
+    public GameObject cameraObj;
+    public GameObject blade;
+    public GameObject flame;
+    public GameObject healingSparkle;
+    public GameObject removeDebuffSparkle;
+    public GameObject shieldIcon;
+    public GameObject snake;
+    public GameObject taji;
+    public GameObject clock;
+    
     //int targetNum;
     public int currChooseTargetNum = 0;
     public bool bNeedChooseTarget = false;
@@ -46,10 +58,15 @@ public class HeroSkill : MonoBehaviour
             int nNeedTargetNum = HeroManager.Instance.getHeroDataDic(heroIndex).m_nTargetNum;
             int nSkillNeedStep = HeroManager.Instance.getHeroDataDic(heroIndex).m_nSkillCostMove;
             int currMoveStep = selectedHero.GetComponent<HeroEntity>().m_pHero.getCurrentMoveStep();
+            HeroEntity.Heroes m_pHero = selectedHero.GetComponent<HeroEntity>().m_pHero;
             if (nSkillNeedStep > currMoveStep) {
                 return;
             }
 
+            if (m_pHero.getSilenceStatus() == true || m_pHero.getStunnedStatus() == true)
+            {
+                return;
+            }
             
             if (selectedHero.GetComponent<HeroEntity>().nEntityType == GlobalHeroIndex.eEntityType_Paladin)
             {
@@ -284,7 +301,10 @@ public class HeroSkill : MonoBehaviour
                                         HeroEntity passUnit = unitInTileDic[thisTileIndex].GetComponent<HeroEntity>();
                                         if (passUnit.nAlign != selectedPaladin.GetComponent<HeroEntity>().nAlign)
                                         {
+                                            GameObject attackEffect = Instantiate(blade, unitInTileDic[thisTileIndex].transform.position, Quaternion.identity);
+                                            cameraObj.GetComponent<CameraShake>().shake(0.2f,0.2f);
                                             attack(selectedPaladin, unitInTileDic[thisTileIndex]);
+                                           // 
                                         }
                                     }
                                 }
@@ -394,7 +414,10 @@ public class HeroSkill : MonoBehaviour
             bDoneSkill = false;
             return;
         }
+        GameObject effect = Instantiate(snake,aimedTargetList[0].transform.position,Quaternion.identity);
+        cameraObj.GetComponent<CameraShake>().shake(0.2f, 0.2f);
         aimedTargetList[0].GetComponent<HeroEntity>().m_pHero.addStatus(selectedHero.name,HeroManager.Instance.pPoisonDebuff);
+        
         bDoneSkill = true;
     }
 
@@ -427,7 +450,7 @@ public class HeroSkill : MonoBehaviour
             return;
         }
         GameObject newTile = Instantiate(temporaryTilePrefab, aimedTargetList[0].transform.position, Quaternion.identity);
-        newTile.GetComponent<SpriteRenderer>().color = Color.red;
+        newTile.GetComponent<SpriteRenderer>().sprite = UIManager.Instance.temporaryObstle;
         TemporaryTile newTileScript = newTile.GetComponent<TemporaryTile>();
         newTileScript.thisTileAwake(x,y, GlobTileType.eTile_nObstacle);
         bDoneSkill = true;
@@ -443,7 +466,7 @@ public class HeroSkill : MonoBehaviour
         int x = aimedTileScipt.x;
         int y = aimedTileScipt.y;
         GameObject newTile = Instantiate(temporaryTilePrefab, aimedTargetList[0].transform.position, Quaternion.identity);
-        newTile.GetComponent<SpriteRenderer>().color = Color.yellow;
+        newTile.GetComponent<SpriteRenderer>().sprite = UIManager.Instance.temporaryWalkable;
         TemporaryTile newTileScript = newTile.GetComponent<TemporaryTile>();
         newTileScript.thisTileAwake(x, y, GlobTileType.eTile_nWalkable);
         bDoneSkill = true;
@@ -463,11 +486,15 @@ public class HeroSkill : MonoBehaviour
         HeroEntity.Heroes enemyHeroScript = aimedTargetList[0].GetComponent<HeroEntity>().m_pHero;
         enemyHeroScript.addStatus(selectedHero.name,HeroManager.Instance.pVulnerabilityByMonk);
         enemyHeroScript.addStatus(selectedHero.name,HeroManager.Instance.pWeaknessDebuff);
+        GameObject effect = Instantiate(taji,aimedTargetList[0].transform.position,Quaternion.identity);
         bDoneSkill = true;
     }
 
     void skill_Flame() {
         aoeAttack(1, selectedHero);
+        GameObject effect = Instantiate(flame,new Vector3(selectedHero.transform.position.x, selectedHero.transform.position.y,0),Quaternion.identity);
+        SoundEffectManager.Instance.playAudio(5);
+        cameraObj.GetComponent<CameraShake>().shake(0.2f, 0.3f);
         bDoneSkill = true;
     }
 
@@ -513,12 +540,16 @@ public class HeroSkill : MonoBehaviour
             bDoneSkill = false;
             return;
         }
+        cameraObj.GetComponent<CameraShake>().shake(0.2f, 0.3f);
+        GameObject attackEffect = Instantiate(blade, aimedTargetList[0].transform.position, Quaternion.identity);
         attack(selectedHero, aimedTargetList[0]);
+
         if (aimedTargetList[0] == null) {
             return;
         }
         aimedTargetList[0].GetComponent<HeroEntity>().m_pHero.addStatus(selectedHero.name,HeroManager.Instance.pVulnerabilityByBerserker);
         bDoneSkill = true;
+        SoundEffectManager.Instance.playAudio(3);
     }
 
     void skill_ElfArcher() {
@@ -533,6 +564,8 @@ public class HeroSkill : MonoBehaviour
             return;
         }
         attack(selectedHero, aimedTargetList[0]);
+        cameraObj.GetComponent<CameraShake>().shake(0.2f, 0.25f);
+        SoundEffectManager.Instance.playAudio(0);
         bDoneSkill = true;
     }
 
@@ -552,6 +585,7 @@ public class HeroSkill : MonoBehaviour
         if (selectedHeroScript.nAlign == aimedHeroScript.nAlign) {
             int healingValue = selectedHeroScript.m_pHero.getBasicAttack();
             aimedHeroScript.m_pHero.modifyHPByHealing(healingValue);
+           GameObject effect =  Instantiate(healingSparkle,aimedTargetList[0].transform.position,Quaternion.identity);
             bDoneSkill = true;
         }
     }
@@ -568,6 +602,8 @@ public class HeroSkill : MonoBehaviour
             return;
         }
         aimedTargetList[0].GetComponent<HeroEntity>().m_pHero.addStatus(selectedHero.name,HeroManager.Instance.pPurifier);
+        GameObject effect = Instantiate(removeDebuffSparkle, aimedTargetList[0].transform.position, Quaternion.identity);
+        SoundEffectManager.Instance.playAudio(6);
         bDoneSkill = true;
     }
 
@@ -583,6 +619,7 @@ public class HeroSkill : MonoBehaviour
             return;
         }
         aimedTargetList[0].GetComponent<HeroEntity>().m_pHero.addStatus(selectedHero.name,HeroManager.Instance.pShield);
+       GameObject effect =  Instantiate(shieldIcon, aimedTargetList[0].transform.position, Quaternion.identity);
         bDoneSkill = true;
 
     }
@@ -707,6 +744,14 @@ public class HeroSkill : MonoBehaviour
         Destroy(selectedKing);
         GameObject newKingdom = Instantiate(kingdomIconPrefab,pos,Quaternion.identity);
         newKingdom.name = "kingdomIcon" + GameManager.Instance.getTurn().ToString();
+        if (GameManager.Instance.currPlayer == GameManager.Instance.m_player1)
+        {
+            newKingdom.GetComponent<SpriteRenderer>().color = new Color32(255,174,0,255);
+        }
+        else if(GameManager.Instance.currPlayer == GameManager.Instance.m_player2)
+        {
+            newKingdom.GetComponent<SpriteRenderer>().color = new Color32(255, 47, 255, 255);
+        }
         GameObject pointAtKingdom = Instantiate(pointAtKingdomPrefab);
         pointAtKingdom.transform.position = new Vector2(pos.x, pos.y + 1);
         newKingdom.GetComponent<Structure>().x = indexX;
@@ -716,10 +761,18 @@ public class HeroSkill : MonoBehaviour
 
         GameManager.Instance.currPlayer.setHasKingdom(true);
         GameManager.Instance.currPlayer.setKingdomIndex(new Vector2Int(indexX,indexY));
+
+        GameManager.Instance.modifyTileHasUnit(new Vector2Int(newKingdom.GetComponent<Structure>().x, newKingdom.GetComponent<Structure>().y));
+        GameManager.Instance.modifyUnitInTile(new Vector2Int(newKingdom.GetComponent<Structure>().x, newKingdom.GetComponent<Structure>().y));
         bDoneSkill = true;
     }
+    
+    public void spawnClock(Vector2 pos)
+    {
+       GameObject effct =  Instantiate(clock,new Vector3(pos.x,pos.y,0),Quaternion.identity);
+        cameraObj.GetComponent<CameraShake>().shake(0.2f, 0.25f);
 
-
+    }
 
     void resetHeroSkill() {
         Instance = this;
@@ -890,6 +943,7 @@ public class HeroSkill : MonoBehaviour
                                 aimed_pHero.modifyDefense(-attackValue);
                             }
                         }
+                        cameraObj.GetComponent<CameraShake>().shake(0.3f, 0.3f);
                         aimed_pHero.modifyHP(-attackValue);
                     }
                 }

@@ -107,10 +107,13 @@ public class GameManager : MonoBehaviour
             currPlayer = m_player2;
             currPlayer.resetEveryHeroInfoOnTurn();
             setCameraEveryTurn();
+            addCurrentTurnNum();
             if (getCurrentTurn() == 0)
             {
                 tutorialControllerScript.spawnPointAtKing(GameObject.Find("king2").transform.position.x, GameObject.Find("king2").transform.position.y);
             }
+            m_player1.setFogOfWarActive(false);
+            m_player2.setFogOfWarActive(true);
         }
         else if(nTurn == 1){
             nTurn = 0;
@@ -121,8 +124,20 @@ public class GameManager : MonoBehaviour
 
             m_player1.modifyMoney(2);
             m_player2.modifyMoney(2);
+
+            m_player1.setFogOfWarActive(true);
+            m_player2.setFogOfWarActive(false);
         }
         HeroManager.Instance.generateHeroEveryTurn();
+        if (GameObject.Find("king1") != null)
+        {
+            GameObject.Find("king1").GetComponent<HeroEntity>().resetHeroInfoEveryTurn();
+        }
+
+        if (GameObject.Find("king2") != null)
+        {
+            GameObject.Find("king2").GetComponent<HeroEntity>().resetHeroInfoEveryTurn();
+        }
         UIManager.Instance.setCardActiveEveryTurn();
         mouseController.GetComponent<MouseController>().resetSelectedHeroObj();
     }
@@ -197,7 +212,59 @@ public class GameManager : MonoBehaviour
         GameObject.Find("myCamera").transform.position = startPos;
     }
 
-    void resetGameManager() {
+    public void removeFogOfWar(int a, int b, int i)
+    {
+        if (i == 0)
+        {
+            if (b % 2 == 1)
+            {
+                m_player1.removeFogOfWar(a + 1, b);
+                m_player1.removeFogOfWar(a, b + 1);
+                m_player1.removeFogOfWar(a + 1, b + 1);
+                m_player1.removeFogOfWar(a + 1, b - 1);
+                m_player1.removeFogOfWar(a, b - 1);
+                m_player1.removeFogOfWar(a - 1, b);
+                m_player1.removeFogOfWar(a, b);
+
+            }
+            else
+            {
+                m_player1.removeFogOfWar(a, b + 1);
+                m_player1.removeFogOfWar(a + 1, b);
+                m_player1.removeFogOfWar(a - 1, b + 1);
+                m_player1.removeFogOfWar(a - 1, b);
+                m_player1.removeFogOfWar(a - 1, b - 1);
+                m_player1.removeFogOfWar(a, b - 1);
+                m_player1.removeFogOfWar(a, b);
+            }
+        }
+        else if (i == 1)
+        {
+            if (b % 2 == 1)
+            {
+                m_player2.removeFogOfWar(a + 1, b);
+                m_player2.removeFogOfWar(a, b + 1);
+                m_player2.removeFogOfWar(a + 1, b + 1);
+                m_player2.removeFogOfWar(a + 1, b - 1);
+                m_player2.removeFogOfWar(a, b - 1);
+                m_player2.removeFogOfWar(a - 1, b);
+                m_player2.removeFogOfWar(a, b);
+
+            }
+            else
+            {
+                m_player2.removeFogOfWar(a, b + 1);
+                m_player2.removeFogOfWar(a + 1, b);
+                m_player2.removeFogOfWar(a - 1, b + 1);
+                m_player2.removeFogOfWar(a - 1, b);
+                m_player2.removeFogOfWar(a - 1, b - 1);
+                m_player2.removeFogOfWar(a, b - 1);
+                m_player2.removeFogOfWar(a, b);
+            }
+        }
+    }
+
+        void resetGameManager() {
         Instance = this;
         nTurn = 0;
         tileObjectByIndex = new Dictionary<string, GameObject>();

@@ -11,14 +11,27 @@ public class UIManager : MonoBehaviour
     public List<Sprite> heroIconOnMapSrpites;
     public List<Sprite> heroChips;
     public Text currentMoneyText;
+    public Sprite mineTrap;
+    public Sprite temporaryObstle;
+    public Sprite temporaryWalkable;
+    public Sprite stunnedMask;
+    public Sprite silenceMask;
+    public GameObject gameOverScene;
+    [Header("Character")]
+    public List<Sprite> heroPhotoList;
+    public List<Sprite> heroCardSpriteLst;
     [Header("Kingdom")]
     public GameObject kingdomCanvas;
+    public Text currentStructureNum;
     [Header("Tavern")]
     public GameObject TavernCanvas;
     public GameObject TavernPanel;
     public List<GameObject> heroCardList;
     public List<Text> heroNameList;
     public List<Text> heroSkillDescription;
+    public List<Text> heroMoney;
+    public Text currentHeroNum;
+    public Text maxHeroNum;
     [Header("hero information on map")]
     public Text heroNameText;
     public Text currHPText;
@@ -28,6 +41,7 @@ public class UIManager : MonoBehaviour
     public Text ActionNameText;
     public GameObject heroInformationPanel;
     Animator heroInformationPnelAnime;
+    public Image photo;
     [Header("arrowColor")]
     public List<Color32> arrowColorLst;
     // Start is called before the first frame update
@@ -42,9 +56,15 @@ public class UIManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        
         if (GameManager.Instance.currPlayer != null)
         {
             currentMoneyText.text = GameManager.Instance.currPlayer.getMoney().ToString();
+
+            currentHeroNum.text = GameManager.Instance.currPlayer.getCurrHeroNum().ToString();
+            maxHeroNum.text = GameManager.Instance.currPlayer.getMaxHeroNum().ToString();
+
+            currentStructureNum.text = GameManager.Instance.currPlayer.getCurrStructureNum().ToString();
         }
 
 
@@ -64,8 +84,9 @@ public class UIManager : MonoBehaviour
         }
 
         GameObject pSelectedHero = mouseController.GetComponent<MouseController>().selectedUnitObj;
-        setHeroInformation(pSelectedHero);      
+        setHeroInformation(pSelectedHero);
 
+        
     }
 
    
@@ -96,6 +117,14 @@ public class UIManager : MonoBehaviour
         heroSkillDescription[heroCardIndex].text = description;
     }
 
+    public void setHeroMoney(int heroCardIndex,int value) {
+        heroMoney[heroCardIndex].text = value.ToString();
+    }
+
+    public void setHeroCardSprite(int heroCardIndex,int value) {
+        heroCardList[heroCardIndex].GetComponent<Image>().sprite = heroCardSpriteLst[value];
+    }
+
     public void setCardActiveEveryTurn() {
         for (int i = 0; i < heroCardList.Count; i++)
         {
@@ -115,9 +144,12 @@ public class UIManager : MonoBehaviour
         takeMoveText.text = thisHeroData.m_nSkillCostMove.ToString();
         skillValueText.text = thisHeroData.m_strSkillValue;
         ActionNameText.text = thisHeroData.m_strActionName;
+        photo.sprite = heroPhotoList[nEntityType];
     }
 
-
+    public void setGameOverSceneActive(bool value) {
+        gameOverScene.SetActive(value);
+    }
     void resetUIManager() {
         Instance = this;
         heroInformationPnelAnime = heroInformationPanel.GetComponent<Animator>();

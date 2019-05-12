@@ -26,6 +26,23 @@ public class Structure : MonoBehaviour
     
     private void OnTriggerEnter2D(Collider2D collision)
     {
+        if (collision.gameObject.GetComponent<HeroEntity>().nAlign == nPlayer)
+        {
+            return;
+        }
+
+       
+        if (GameManager.Instance.currPlayer == GameManager.Instance.m_player1)
+        {
+            GameManager.Instance.m_player2.modifyCurrStrutureNum(-1);
+        }
+        else
+        {
+            GameManager.Instance.m_player1.modifyCurrStrutureNum(-1);
+        }
+
+
+
         if (collision.gameObject.GetComponent<HeroEntity>() == null)
         {
             return;
@@ -38,8 +55,9 @@ public class Structure : MonoBehaviour
 
         if (nType == GlobStructureType.eStructure_nKingdom)
         {
-            Destroy(gameObject);
+            UIManager.Instance.setGameOverSceneActive(true);
         }
+        Destroy(gameObject);
     }
     
 }

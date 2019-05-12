@@ -1,10 +1,12 @@
 fileFormatVersion: 2
-guid: 4d5627b60445f1241997fc9c31d24dfe
+guid: 58e91685b7f037e45bbbb04753071d72
 TextureImporter:
-  fileIDToRecycleName:
-    21300000: castle icon_0
+  internalIDToNameTable:
+  - first:
+      213: 21300000
+    second: castle icon_0
   externalObjects: {}
-  serializedVersion: 7
+  serializedVersion: 10
   mipmaps:
     mipMapMode: 0
     enableMipMap: 0
@@ -133,6 +135,7 @@ TextureImporter:
       tessellationDetail: 0
       bones: []
       spriteID: df578e801ecb3124a86dbdb6ff0a6e1e
+      internalID: 21300000
       vertices: []
       indices: 
       edges: []
@@ -141,13 +144,15 @@ TextureImporter:
     physicsShape: []
     bones: []
     spriteID: aa367f8e2920c154c9e074a3441b6d41
+    internalID: 0
     vertices: []
     indices: 
     edges: []
     weights: []
+    secondaryTextures: []
   spritePackingTag: 
   pSDRemoveMatte: 0
-  pSDShowRemoveMatteOption: 0
+  pSDShowRemoveMatteOption: 1
   userData: 
   assetBundleName: 
   assetBundleVariant: 
